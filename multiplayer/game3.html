@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Cờ Cá Ngựa</title>
+<style>
+  :root{ --bg:#2b1d14; --panel:#3a291c; --line:#6b4d33; --text:#fff6e8; --muted:#d3bea0; --accent:#ffcf5a;
+    --c0:#e2463f; --c1:#2f7fe0; --c2:#f2b705; --c3:#2fa84f; }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden;background:radial-gradient(circle at 50% 30%,#4a3322,#1d130c);color:var(--text);
+    font-family:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;user-select:none;-webkit-user-select:none}
+  #topbar{position:fixed;top:0;left:0;right:0;height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 8px;z-index:5}
+  .back{color:var(--muted);text-decoration:none;font-size:13px;padding:6px 9px;border-radius:8px;background:rgba(255,255,255,.07)}
+  .back:hover{color:#fff}
+  .ttl{font-weight:800;color:var(--accent);font-size:16px}
+  .iconbtn{border:0;background:rgba(255,255,255,.08);color:var(--text);font-size:14px;padding:6px 10px;border-radius:8px;cursor:pointer}
+  #main{position:fixed;top:44px;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:6px}
+  #main.land{flex-direction:row}
+  #boardWrap{display:flex;align-items:center;justify-content:center;min-width:0;min-height:0}
+  canvas{display:block;border-radius:12px;box-shadow:0 12px 36px rgba(0,0,0,.55);touch-action:manipulation;cursor:pointer}
+  #panel{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;max-width:420px}
+  #main.land #panel{width:260px}
+  #turnRow{display:flex;align-items:center;gap:12px;width:100%;justify-content:center}
+  #dice{width:74px;height:74px;border-radius:16px;background:#fffdf7;border:5px solid #888;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:8px;cursor:pointer;box-shadow:0 6px 0 rgba(0,0,0,.35);transition:border-color .2s;flex:0 0 auto}
+  #dice.rolling{animation:shake .12s linear infinite}
+  #dice.ready{animation:glow 1s ease-in-out infinite}
+  #dice.disabled{cursor:default;opacity:.85}
+  @keyframes shake{0%{transform:rotate(-12deg) translateY(-3px)}50%{transform:rotate(12deg) translateY(2px)}100%{transform:rotate(-12deg) translateY(-3px)}}
+  @keyframes glow{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+  .pip{width:12px;height:12px;border-radius:50%;background:#222;align-self:center;justify-self:center;visibility:hidden}
+  .pip.on{visibility:visible}
+  #status{flex:1;min-width:0;background:rgba(0,0,0,.25);border-radius:12px;padding:8px 12px;font-size:14px;line-height:1.4;min-height:62px}
+  #status b{font-size:16px}
+  #players{display:grid;grid-template-columns:1fr 1fr;gap:6px;width:100%}
+  .pl{display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.2);border-radius:10px;padding:5px 8px;font-size:12.5px;border:2px solid transparent}
+  .pl.cur{border-color:var(--accent);background:rgba(255,207,90,.12)}
+  .pl .dot{width:14px;height:14px;border-radius:50%;flex:0 0 auto}
+  .pl.off{opacity:.35}
+  .hint{font-size:12px;color:var(--muted);text-align:center}
+  #main.land #players{grid-template-columns:1fr}
+  @media (pointer:coarse){ #kbHint{display:none} }
+  .overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(20,12,6,.78);backdrop-filter:blur(4px);z-index:10;padding:16px;overflow-y:auto}
+  .overlay.hidden{display:none}
+  .card{background:linear-gradient(160deg,#4d3624,#2f2015);border:1px solid var(--line);border-radius:18px;padding:20px 18px;max-width:460px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.6);text-align:center;max-height:100%;overflow-y:auto}
+  h1{font-size:30px;color:var(--accent);text-shadow:0 3px 0 #7a4a10;margin-bottom:4px}
+  h2{font-size:24px;margin-bottom:8px}
+  .sub{color:var(--muted);font-size:14px;margin-bottom:10px}
+  .seat{display:flex;align-items:center;gap:8px;margin:6px 0}
+  .seat .name{width:84px;text-align:left;font-weight:700;display:flex;align-items:center;gap:6px;font-size:14px}
+  .seat .dot{width:16px;height:16px;border-radius:50%}
+  .seg{flex:1;display:flex;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+  .seg button{flex:1;border:0;background:rgba(255,255,255,.05);color:var(--text);padding:8px 2px;font-size:13px;cursor:pointer}
+  .seg button.sel{background:var(--accent);color:#2a1700;font-weight:700}
+  .chk{display:flex;align-items:center;gap:8px;justify-content:center;font-size:13.5px;margin:8px 0;color:var(--muted)}
+  .btn{display:inline-block;border:0;background:linear-gradient(180deg,#ffd76a,#f0a92a);color:#2a1700;font-weight:800;font-size:18px;padding:12px 26px;border-radius:12px;cursor:pointer;margin:6px 4px;box-shadow:0 5px 0 #8a5a10}
+  .btn:active{transform:translateY(3px);box-shadow:0 2px 0 #8a5a10}
+  .btn.ghost{background:rgba(255,255,255,.1);color:var(--text);box-shadow:none;font-weight:600}
+  .help{text-align:left;font-size:13px;color:#f0e2cc;background:rgba(0,0,0,.22);border-radius:12px;padding:10px 14px;margin:10px 0;line-height:1.55}
+  .help b{color:#fff}
+  .k{display:inline-block;min-width:20px;padding:0 5px;border:1px solid #8a6a48;border-bottom-width:3px;border-radius:5px;font-size:12px;text-align:center;background:#2a1b10;color:#fff}
+  .stats{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.6}
+  .err{color:#ff8a7a;font-size:13px;min-height:18px}
+  .big{font-size:46px}
+  details summary{cursor:pointer;color:var(--accent);font-size:14px;margin-top:6px}
+  .rank{font-size:14px;line-height:1.7;margin:6px 0}
+</style>
+</head>
+<body>
+<div id="topbar">
+  <a class="back" href="../index.html">← Danh sách game</a>
+  <span class="ttl">🐴 Cờ Cá Ngựa</span>
+  <button class="iconbtn" id="menuTopBtn">☰ Menu</button>
+</div>
+<div id="main">
+  <div id="boardWrap"><canvas id="cv"></canvas></div>
+  <div id="panel">
+    <div id="turnRow">
+      <div id="dice" aria-label="Xúc xắc"></div>
+      <div id="status">Chào mừng!</div>
+    </div>
+    <div id="players"></div>
+    <div class="hint" id="kbHint"><span class="k">Space</span> gieo · <span class="k">1</span>–<span class="k">4</span> hoặc <span class="k">Tab</span> chọn ngựa · <span class="k">Enter</span> đi</div>
+  </div>
+</div>
+
+<div class="overlay" id="menu">
+  <div class="card">
+    <h1>🐴 Cờ Cá Ngựa</h1>
+    <div class="sub">2–4 người chơi · mỗi ghế có thể là Người hoặc Máy</div>
+    <div id="seats"></div>
+    <label class="chk"><input type="checkbox" id="optOne"> Cho ra quân khi gieo được 1 hoặc 6</label>
+    <div class="err" id="seatErr"></div>
+    <button class="btn" id="startBtn">Bắt đầu</button>
+    <details>
+      <summary>📖 Luật chơi</summary>
+      <div class="help">
+        • Mỗi người có <b>4 ngựa</b> trong chuồng. Gieo được <b>6</b> mới được xuất quân ra ô xuất phát.<br>
+        • Gieo <b>6</b> được gieo thêm lượt.<br>
+        • Ngựa đi theo chiều kim đồng hồ đúng số chấm. <b>Không được nhảy qua</b> đầu ngựa khác.<br>
+        • Đi đúng vào ô có ngựa đối thủ thì <b>đá</b> ngựa đó về chuồng. Không được đi vào ô có ngựa nhà.<br>
+        • Ngựa phải dừng đúng tại <b>cửa chuồng</b> (ô ngay trước đường về đích, không được đi quá).<br>
+        • Từ cửa chuồng, gieo <b>n</b> để lên thẳng bậc <b>n</b> (không có ngựa chắn đường). Ở bậc <b>n</b> muốn lên bậc <b>n+1</b> phải gieo đúng <b>n+1</b>.<br>
+        • Ai đưa đủ 4 ngựa lên các bậc <b>3, 4, 5, 6</b> trước sẽ thắng.<br>
+        • Điều khiển: bấm xúc xắc (hoặc <span class="k">Space</span>) để gieo, chạm vào ngựa đang sáng để đi. Bàn phím: <span class="k">1</span>–<span class="k">4</span> chọn ngựa, <span class="k">Tab</span> đổi ngựa, <span class="k">Enter</span> đi.
+      </div>
+    </details>
+    <div class="stats" id="menuStats"></div>
+  </div>
+</div>
+<div class="overlay hidden" id="endOv">
+  <div class="card">
+    <div class="big">🏆</div>
+    <h2 id="winText">Đỏ thắng!</h2>
+    <div class="rank" id="rank"></div>
+    <div class="stats" id="endStats"></div>
+    <button class="btn" id="againBtn">Chơi lại</button>
+    <button class="btn ghost" id="menuBtn">Menu</button>
+  </div>
+</div>
+<div class="overlay hidden" id="confirmOv">
+  <div class="card"><h2>Về menu?</h2><div class="sub">Ván đang chơi sẽ bị huỷ.</div>
+    <button class="btn" id="yesMenu">Về menu</button><button class="btn ghost" id="noMenu">Chơi tiếp</button></div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const $ = id => document.getElementById(id);
+const COLORS = ['#e2463f','#2f7fe0','#f2b705','#2fa84f'];
+const DARK = ['#8e1f1a','#1a4a8a','#9a7200','#1a6a30'];
+const LIGHT = ['#ffd0cc','#cfe2ff','#fff0b3','#cdeed6'];
+const NAMES = ['Đỏ','Xanh dương','Vàng','Xanh lá'];
+const STORE = 'cocangua_stats_v1';
+const N = 15, CS = 40, BW = N*CS;
+
+// ---- storage ----
+function loadStats(){ try { const s = JSON.parse(localStorage.getItem(STORE)); if (s && typeof s === 'object') return s; } catch(e){} return {games:0, wins:[0,0,0,0], humanWins:0, botWins:0, captures:0}; }
+let stats = loadStats(); if (!Array.isArray(stats.wins)) stats.wins = [0,0,0,0];
+function saveStats(){ try { localStorage.setItem(STORE, JSON.stringify(stats)); } catch(e){} }
+function statsText(){ return `Số ván: <b>${stats.games}</b> · Người thắng: <b>${stats.humanWins}</b> · Máy thắng: <b>${stats.botWins}</b><br>` +
+  NAMES.map((n,i)=>`<span style="color:${COLORS[i]}">${n}</span>: <b>${stats.wins[i]}</b>`).join(' · ') + `<br>Tổng số lần đá ngựa: <b>${stats.captures}</b>`; }
+
+// ---- audio ----
+let actx = null;
+function tone(f, d=.08, type='sine', v=.07, delay=0){
+  try{ if (!actx) actx = new (window.AudioContext||window.webkitAudioContext)(); if (actx.state==='suspended') actx.resume();
+    const t = actx.currentTime + delay, o = actx.createOscillator(), g = actx.createGain(); o.type = type; o.frequency.value = f;
+    g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.0001, t+d); o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t+d+.02);
+  }catch(e){}
+}
+
+// ---- geometry ----
+function rot(x, y, k){ for (let i=0;i<k;i++){ const nx = 14 - y; y = x; x = nx; } return [x, y]; }
+const S0 = [[6,5],[6,4],[6,3],[6,2],[6,1],[6,0],[7,0],[8,0],[8,1],[8,2],[8,3],[8,4],[8,5]];
+const TRACK = [];
+for (let p=0;p<4;p++) for (const [x,y] of S0) TRACK.push(rot(x,y,p));
+const START = p => 13*p + 8, GATE = p => 13*p + 6;
+const HOME = []; for (let p=0;p<4;p++){ HOME.push([]); for (let s=1;s<=6;s++) HOME[p].push(rot(7, s, p)); }
+// stable slots (corner region 6x6). p0 top-right
+const STABLE = []; for (let p=0;p<4;p++){ STABLE.push([[10.5,1.5],[12.5,1.5],[10.5,3.5],[12.5,3.5]].map(([x,y]) => { const [a,b] = rot(x-0.5,y-0.5,p); return [a+0.5,b+0.5]; })); }
+const STABLE_RECT = []; for (let p=0;p<4;p++){ const c = [[9,0],[14,0],[9,5],[14,5]].map(([x,y]) => rot(x,y,p)); const xs = c.map(v=>v[0]), ys = c.map(v=>v[1]); STABLE_RECT.push([Math.min(...xs), Math.min(...ys)]); }
+
+// ---- game state ----
+let seats = ['human','off','bot','off'];
+let active = [], horses = [], cur = 0, phase = 'menu', dice = 6, moves = [], sel = 0, anim = null, extra = false, optOne = false;
+let winner = -1, gameCaptures = 0, botTimer = null, sixCount = 0;
+// horse pos: -1 stable, 0..50 track progress, 51..56 home steps 1..6
+function trackIndex(p, pos){ return (START(p) + pos) % 52; }
+function cellOf(p, h){
+  const pos = horses[p][h];
+  if (pos < 0) return STABLE[p][h];
+  if (pos <= 50){ const [x,y] = TRACK[trackIndex(p,pos)]; return [x+.5, y+.5]; }
+  const [x,y] = HOME[p][pos-51]; return [x+.5, y+.5];
+}
+function occupant(ti){ // returns [p,h] on track index ti
+  for (const p of active) for (let h=0;h<4;h++){ const pos = horses[p][h]; if (pos >= 0 && pos <= 50 && trackIndex(p,pos) === ti) return [p,h]; }
+  return null;
+}
+function legalMoves(p, d){
+  const res = [];
+  for (let h=0;h<4;h++){
+    const pos = horses[p][h];
+    if (pos === -1){
+      if (d === 6 || (optOne && d === 1)){
+        const occ = occupant(START(p));
+        if (occ && occ[0] === p) continue;
+        res.push({h, from:-1, to:0, capture: occ, path:[0]});
+      }
+    } else if (pos < 50){
+      const to = pos + d; if (to > 50) continue;
+      let blocked = false;
+      for (let k=pos+1;k<to;k++) if (occupant(trackIndex(p,k))){ blocked = true; break; }
+      if (blocked) continue;
+      const occ = occupant(trackIndex(p,to));
+      if (occ && occ[0] === p) continue;
+      const path = []; for (let k=pos+1;k<=to;k++) path.push(k);
+      res.push({h, from:pos, to, capture: occ, path});
+    } else if (pos === 50){
+      let ok = true; for (let s=1;s<=d;s++) if (horses[p].some(v => v === 50+s)){ ok = false; break; }
+      if (!ok) continue;
+      const path = []; for (let s=1;s<=d;s++) path.push(50+s);
+      res.push({h, from:50, to:50+d, capture:null, path});
+    } else if (pos < 56){
+      const s = pos - 50;
+      if (d === s+1 && !horses[p].some(v => v === pos+1)) res.push({h, from:pos, to:pos+1, capture:null, path:[pos+1]});
+    }
+  }
+  return res;
+}
+function hasWon(p){ return horses[p].every(v => v >= 53); }
+
+// ---- AI ----
+function threatAt(p, ti){ // can any opponent reach track index ti exactly with one roll?
+  for (const q of active){ if (q === p) continue;
+    for (let h=0;h<4;h++){ const pos = horses[q][h]; if (pos < 0 || pos >= 50) continue;
+      for (let d=1; d<=6; d++){ if (pos + d > 50) break; const t = trackIndex(q, pos+d); if (t === ti){
+        let blocked = false; for (let k=pos+1;k<pos+d;k++) if (occupant(trackIndex(q,k))){ blocked = true; break; }
+        if (!blocked) return true; } } }
+    // horses in stable threaten their start square
+    if (horses[q].some(v => v === -1) && START(q) === ti) return true;
+  }
+  return false;
+}
+function chooseBotMove(p, ms){
+  let best = null, bs = -1e9;
+  for (const m of ms){
+    let s = Math.random()*4;
+    if (m.capture){ s += 120 + Math.max(0, horses[m.capture[0]][m.capture[1]]) * 1.5; }
+    if (m.from === -1) s += 70;
+    if (m.to > 50) s += 90 + m.to;
+    else if (m.to === 50) s += 60;
+    else {
+      s += m.to * 0.6;
+      if (threatAt(p, trackIndex(p, m.to))) s -= 45;
+      if (m.from >= 0 && m.from < 50 && threatAt(p, trackIndex(p, m.from))) s += 30 + m.from*0.3;
+    }
+    if (s > bs){ bs = s; best = m; }
+  }
+  return best;
+}
+
+// ---- layout ----
+const cv = $('cv'), ctx = cv.getContext('2d'), main = $('main');
+let scale = 1, dpr = 1;
+function layout(){
+  const W = window.innerWidth, H = window.innerHeight - 44;
+  const land = W > H * 1.15 && W >= 600;
+  main.classList.toggle('land', land);
+  let size;
+  if (land) size = Math.min(H - 16, W - 260 - 30);
+  else size = Math.min(W - 16, H - 16 - ($('panel').offsetHeight || 190) - 8);
+  size = Math.max(200, Math.floor(size));
+  scale = size / BW; dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.style.width = size + 'px'; cv.style.height = size + 'px';
+  cv.width = Math.floor(size*dpr); cv.height = Math.floor(size*dpr);
+}
+window.addEventListener('resize', layout);
+
+// ---- UI: dice / panel ----
+const diceEl = $('dice');
+const PIPS = {1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+for (let i=0;i<9;i++){ const d = document.createElement('div'); d.className = 'pip'; diceEl.appendChild(d); }
+function showDice(v){ const on = PIPS[v]; [...diceEl.children].forEach((c,i) => c.classList.toggle('on', on.includes(i))); }
+showDice(6);
+function setStatus(html){ $('status').innerHTML = html; }
+function renderPlayers(){
+  const box = $('players'); box.innerHTML = '';
+  for (let p=0;p<4;p++){
+    const d = document.createElement('div'); d.className = 'pl' + (seats[p]==='off' ? ' off' : '') + (p===cur && phase!=='menu' && phase!=='over' ? ' cur' : '');
+    const home = horses[p] ? horses[p].filter(v => v > 50).length : 0;
+    const label = seats[p]==='off' ? 'Không chơi' : (seats[p]==='bot' ? '🤖 Máy' : '🙂 Người');
+    d.innerHTML = `<span class="dot" style="background:${COLORS[p]}"></span><span><b>${NAMES[p]}</b> · ${label}${seats[p]!=='off' ? ` · 🏠${home}/4` : ''}</span>`;
+    box.appendChild(d);
+  }
+}
+function updateDiceUI(){
+  diceEl.style.borderColor = COLORS[cur];
+  const canRoll = phase === 'roll' && seats[cur] === 'human';
+  diceEl.classList.toggle('ready', canRoll);
+  diceEl.classList.toggle('disabled', !canRoll);
+}
+
+// ---- setup screen ----
+function buildSeats(){
+  const box = $('seats'); box.innerHTML = '';
+  for (let p=0;p<4;p++){
+    const row = document.createElement('div'); row.className = 'seat';
+    row.innerHTML = `<div class="name"><span class="dot" style="background:${COLORS[p]}"></span>${NAMES[p]}</div>`;
+    const seg = document.createElement('div'); seg.className = 'seg';
+    [['human','🙂 Người'],['bot','🤖 Máy'],['off','✖ Trống']].forEach(([v,l]) => {
+      const b = document.createElement('button'); b.textContent = l; if (seats[p] === v) b.classList.add('sel');
+      b.onclick = () => { seats[p] = v; buildSeats(); }; seg.appendChild(b);
+    });
+    row.appendChild(seg); box.appendChild(row);
+  }
+  const n = seats.filter(s => s !== 'off').length;
+  $('seatErr').textContent = n < 2 ? 'Cần ít nhất 2 người chơi (Người hoặc Máy).' : '';
+}
+function loadSetup(){ try { const s = JSON.parse(localStorage.getItem(STORE+'_setup')); if (s && Array.isArray(s.seats) && s.seats.length===4) { seats = s.seats; optOne = !!s.optOne; } } catch(e){} $('optOne').checked = optOne; }
+function saveSetup(){ try { localStorage.setItem(STORE+'_setup', JSON.stringify({seats, optOne})); } catch(e){} }
+loadSetup(); buildSeats(); $('menuStats').innerHTML = statsText();
+
+function startGame(){
+  if (seats.filter(s => s !== 'off').length < 2){ $('seatErr').textContent = 'Cần ít nhất 2 người chơi (Người hoặc Máy).'; return; }
+  optOne = $('optOne').checked; saveSetup();
+  active = []; for (let p=0;p<4;p++) if (seats[p] !== 'off') active.push(p);
+  horses = [0,1,2,3].map(() => [-1,-1,-1,-1]);
+  cur = active[0]; winner = -1; gameCaptures = 0; anim = null; sixCount = 0;
+  ['menu','endOv','confirmOv'].forEach(id => $(id).classList.add('hidden'));
+  layout(); beginTurn();
+}
+$('startBtn').onclick = startGame; $('againBtn').onclick = startGame;
+$('menuBtn').onclick = toMenu;
+$('menuTopBtn').onclick = () => { if (phase === 'menu') return; if (phase === 'over') { toMenu(); return; } $('confirmOv').classList.remove('hidden'); };
+$('yesMenu').onclick = toMenu; $('noMenu').onclick = () => $('confirmOv').classList.add('hidden');
+function toMenu(){
+  clearTimeout(botTimer); phase = 'menu'; anim = null;
+  ['endOv','confirmOv'].forEach(id => $(id).classList.add('hidden'));
+  buildSeats(); $('menuStats').innerHTML = statsText(); $('menu').classList.remove('hidden'); renderPlayers(); updateDiceUI();
+}
+
+// ---- turn flow ----
+function pname(p){ return `<b style="color:${COLORS[p]}">${NAMES[p]}</b>${seats[p]==='bot' ? ' 🤖' : ''}`; }
+function beginTurn(){
+  phase = 'roll'; moves = []; sel = 0;
+  renderPlayers(); updateDiceUI();
+  if (seats[cur] === 'bot'){ setStatus(`${pname(cur)} đang gieo…`); botTimer = setTimeout(rollDice, 650); }
+  else setStatus(`Lượt ${pname(cur)} — chạm xúc xắc hoặc nhấn <span class="k">Space</span> để gieo.`);
+}
+function rollDice(){
+  if (phase !== 'roll') return;
+  phase = 'rolling'; updateDiceUI(); diceEl.classList.add('rolling');
+  const final = 1 + Math.floor(Math.random()*6);
+  let t = 0;
+  const iv = setInterval(() => { showDice(1 + Math.floor(Math.random()*6)); tone(300 + Math.random()*300, .03, 'square', .03); t++;
+    if (t >= 9){ clearInterval(iv); diceEl.classList.remove('rolling'); dice = final; showDice(final); afterRoll(); } }, 70);
+}
+function afterRoll(){
+  if (phase !== 'rolling') return;
+  extra = dice === 6;
+  moves = legalMoves(cur, dice);
+  if (!moves.length){
+    phase = 'nomove';
+    setStatus(`${pname(cur)} gieo được <b>${dice}</b> — không có nước đi.` + (extra ? ' Được gieo thêm!' : ''));
+    botTimer = setTimeout(() => { if (phase === 'nomove') endTurn(); }, 1100);
+    return;
+  }
+  phase = 'choose'; sel = 0; updateDiceUI();
+  if (seats[cur] === 'bot'){
+    setStatus(`${pname(cur)} gieo được <b>${dice}</b>…`);
+    const m = chooseBotMove(cur, moves);
+    sel = moves.indexOf(m);
+    botTimer = setTimeout(() => doMove(m), 650);
+  } else {
+    if (moves.length === 1){ setStatus(`${pname(cur)} gieo được <b>${dice}</b> — chỉ có 1 nước đi.`); botTimer = setTimeout(() => { if (phase === 'choose') doMove(moves[0]); }, 650); }
+    else setStatus(`${pname(cur)} gieo được <b>${dice}</b> — chọn một ngựa đang sáng để đi.`);
+  }
+}
+function doMove(m){
+  if (phase !== 'choose' || !m) return;
+  phase = 'moving'; clearTimeout(botTimer);
+  anim = { p:cur, h:m.h, path:m.path.slice(), idx:0, t:0, from: m.from, m };
+}
+function finishMove(m){
+  const p = cur;
+  horses[p][m.h] = m.to;
+  if (m.capture){
+    const [q, qh] = m.capture; horses[q][qh] = -1; gameCaptures++; stats.captures++;
+    setStatus(`${pname(p)} đá ngựa ${pname(q)} về chuồng! 💥`);
+    tone(180,.15,'sawtooth',.08); tone(120,.25,'sawtooth',.08,.1);
+  } else if (m.to > 50) tone(880,.1,'triangle',.07);
+  anim = null;
+  if (hasWon(p)){ return gameOver(p); }
+  renderPlayers();
+  botTimer = setTimeout(endTurn, m.capture ? 700 : 250);
+}
+function endTurn(){
+  if (phase === 'over' || phase === 'menu') return;
+  if (extra){ sixCount++; beginTurn(); if (seats[cur]==='human') setStatus(`${pname(cur)} gieo được 6 — gieo thêm lượt nữa!`); return; }
+  sixCount = 0;
+  const i = active.indexOf(cur); cur = active[(i+1) % active.length];
+  beginTurn();
+}
+function gameOver(p){
+  phase = 'over'; winner = p; renderPlayers(); updateDiceUI();
+  stats.games++; stats.wins[p]++; if (seats[p] === 'bot') stats.botWins++; else stats.humanWins++; saveStats();
+  setStatus(`${pname(p)} đã thắng! 🎉`);
+  [523,659,784,1046].forEach((f,i) => tone(f,.25,'triangle',.08,i*.13));
+  const score = q => horses[q].reduce((a,v) => a + (v < 0 ? 0 : v), 0);
+  const order = active.slice().sort((a,b) => (b===p) - (a===p) || score(b) - score(a));
+  $('winText').innerHTML = `${NAMES[p]} ${seats[p]==='bot' ? '(Máy) ' : ''}thắng!`; $('winText').style.color = COLORS[p];
+  $('rank').innerHTML = order.map((q,i) => `${i+1}. <b style="color:${COLORS[q]}">${NAMES[q]}</b> ${seats[q]==='bot'?'🤖':'🙂'} — về đích ${horses[q].filter(v=>v>50).length}/4`).join('<br>');
+  $('endStats').innerHTML = `Số lần đá ngựa ván này: <b>${gameCaptures}</b><br>` + statsText();
+  setTimeout(() => { if (phase === 'over') $('endOv').classList.remove('hidden'); }, 900);
+}
+
+// ---- input ----
+diceEl.addEventListener('click', () => { if (phase === 'roll' && seats[cur] === 'human') rollDice(); });
+cv.addEventListener('click', e => {
+  if (phase !== 'choose' || seats[cur] !== 'human') return;
+  const r = cv.getBoundingClientRect();
+  const x = (e.clientX - r.left) / (r.width / N), y = (e.clientY - r.top) / (r.height / N);
+  let best = -1, bd = 0.9;
+  moves.forEach((m, i) => {
+    const [hx, hy] = cellOf(cur, m.h); const d = Math.hypot(hx - x, hy - y);
+    if (d < bd){ bd = d; best = i; }
+    const [tx, ty] = destCell(cur, m); const d2 = Math.hypot(tx - x, ty - y);
+    if (d2 < bd){ bd = d2; best = i; }
+  });
+  if (best >= 0){ sel = best; doMove(moves[best]); }
+});
+cv.addEventListener('mousemove', e => {
+  if (phase !== 'choose' || seats[cur] !== 'human') return;
+  const r = cv.getBoundingClientRect();
+  const x = (e.clientX - r.left) / (r.width / N), y = (e.clientY - r.top) / (r.height / N);
+  moves.forEach((m, i) => { const [hx, hy] = cellOf(cur, m.h); if (Math.hypot(hx-x, hy-y) < .7) sel = i; });
+});
+window.addEventListener('keydown', e => {
+  if (phase === 'menu'){ if (e.key === 'Enter' && document.activeElement && document.activeElement.tagName !== 'BUTTON') startGame(); return; }
+  if (seats[cur] !== 'human') return;
+  if ((e.key === ' ' || e.key === 'Enter') && phase === 'roll'){ e.preventDefault(); rollDice(); return; }
+  if (phase !== 'choose') return;
+  if (e.key === 'Tab' || e.key === 'ArrowRight' || e.key === 'ArrowDown'){ e.preventDefault(); sel = (sel + 1) % moves.length; }
+  else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp'){ e.preventDefault(); sel = (sel - 1 + moves.length) % moves.length; }
+  else if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); doMove(moves[sel]); }
+  else if (/^[1-4]$/.test(e.key)){ const i = moves.findIndex(m => m.h === +e.key - 1); if (i >= 0){ sel = i; doMove(moves[i]); } }
+});
+function destCell(p, m){
+  if (m.to <= 50){ const [x,y] = TRACK[trackIndex(p, m.to)]; return [x+.5, y+.5]; }
+  const [x,y] = HOME[p][m.to-51]; return [x+.5, y+.5];
+}
+function posCell(p, h, pos){
+  if (pos < 0) return STABLE[p][h];
+  if (pos <= 50){ const [x,y] = TRACK[trackIndex(p,pos)]; return [x+.5,y+.5]; }
+  const [x,y] = HOME[p][pos-51]; return [x+.5,y+.5];
+}
+
+// ---- render ----
+function cellRect(x, y, fill, stroke){ ctx.fillStyle = fill; ctx.fillRect(x*CS+1, y*CS+1, CS-2, CS-2); if (stroke){ ctx.strokeStyle = stroke; ctx.lineWidth = 1.5; ctx.strokeRect(x*CS+1.5, y*CS+1.5, CS-3, CS-3); } }
+function rr(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function drawBoard(){
+  ctx.fillStyle = '#f4e6c8'; ctx.fillRect(0,0,BW,BW);
+  // stables
+  for (let p=0;p<4;p++){
+    const [sx, sy] = STABLE_RECT[p];
+    ctx.fillStyle = COLORS[p]; rr(sx*CS+4, sy*CS+4, 6*CS-8, 6*CS-8, 18); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.92)'; rr(sx*CS+CS*0.75, sy*CS+CS*0.75, 4.5*CS, 4.5*CS, 14); ctx.fill();
+    for (const [cx, cy] of STABLE[p]){ ctx.fillStyle = LIGHT[p]; ctx.beginPath(); ctx.arc(cx*CS, cy*CS, CS*0.62, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = COLORS[p]; ctx.lineWidth = 2; ctx.stroke(); }
+    if (seats[p] === 'off' && phase !== 'menu'){ ctx.fillStyle = 'rgba(80,60,40,.55)'; rr(sx*CS+4, sy*CS+4, 6*CS-8, 6*CS-8, 18); ctx.fill(); }
+  }
+  // track
+  TRACK.forEach(([x,y], i) => {
+    let fill = '#fffaf0';
+    for (let p=0;p<4;p++){ if (i === START(p)) fill = COLORS[p]; else if (i === GATE(p)) fill = LIGHT[p]; }
+    cellRect(x, y, fill, '#b89a6e');
+  });
+  for (let p=0;p<4;p++){
+    const [x,y] = TRACK[START(p)];
+    ctx.fillStyle = '#fff'; ctx.font = `bold ${CS*0.5}px Arial`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('★', x*CS+CS/2, y*CS+CS/2+1);
+    const [gx, gy] = TRACK[GATE(p)];
+    ctx.fillStyle = DARK[p]; ctx.font = `bold ${CS*0.42}px Arial`; ctx.fillText('⌂', gx*CS+CS/2, gy*CS+CS/2+1);
+  }
+  // home lanes
+  for (let p=0;p<4;p++) HOME[p].forEach(([x,y], s) => {
+    cellRect(x, y, s >= 2 ? COLORS[p] : LIGHT[p], DARK[p]);
+    ctx.fillStyle = s >= 2 ? 'rgba(255,255,255,.85)' : DARK[p]; ctx.font = `bold ${CS*0.38}px Arial`; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(String(s+1), x*CS+CS/2, y*CS+CS/2+1);
+  });
+  // center
+  const c = 7*CS+CS/2;
+  ctx.save(); ctx.translate(c, c);
+  for (let p=0;p<4;p++){ ctx.fillStyle = COLORS[p]; ctx.beginPath(); ctx.moveTo(0,0); const a = -Math.PI/2 + p*Math.PI/2; ctx.arc(0,0,CS*0.5,a-Math.PI/4,a+Math.PI/4); ctx.closePath(); ctx.fill(); }
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(0,0,CS*0.22,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+  // corner decoration cells of center
+  [[6,6],[8,6],[6,8],[8,8]].forEach(([x,y]) => { ctx.fillStyle = 'rgba(184,154,110,.35)'; ctx.fillRect(x*CS+3, y*CS+3, CS-6, CS-6); });
+  ctx.strokeStyle = '#8b6a43'; ctx.lineWidth = 4; ctx.strokeRect(2,2,BW-4,BW-4);
+}
+function drawHorse(p, x, y, opts={}){
+  const r = CS*0.38, cx = x*CS, cy = y*CS - (opts.lift||0);
+  ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(x*CS+2, y*CS+r*0.75, r*0.95, r*0.4, 0, 0, Math.PI*2); ctx.fill();
+  const g = ctx.createRadialGradient(cx - r*0.35, cy - r*0.35, r*0.1, cx, cy, r);
+  g.addColorStop(0, LIGHT[p]); g.addColorStop(0.45, COLORS[p]); g.addColorStop(1, DARK[p]);
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = '#fff'; ctx.font = `bold ${r*1.25}px "Segoe UI Symbol","DejaVu Sans",Arial`; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('♞', cx, cy+1);
+  if (opts.num){ ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(cx + r*0.8, cy - r*0.8, r*0.42, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = `bold ${r*0.6}px Arial`; ctx.fillText(String(opts.num), cx + r*0.8, cy - r*0.78); }
+}
+function render(now){
+  ctx.setTransform(dpr*scale,0,0,dpr*scale,0,0);
+  drawBoard();
+  if (!horses.length) return;
+  const pulse = .5 + .5*Math.sin(now/180);
+  const humanChoosing = phase === 'choose' && seats[cur] === 'human';
+  // destination hints
+  if (phase === 'choose'){
+    moves.forEach((m, i) => {
+      const [tx, ty] = destCell(cur, m);
+      ctx.strokeStyle = i === sel ? '#111' : 'rgba(0,0,0,.35)'; ctx.lineWidth = i === sel ? 3 : 2; ctx.setLineDash([5,4]);
+      ctx.beginPath(); ctx.arc(tx*CS, ty*CS, CS*0.42, 0, Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
+      if (m.capture && i === sel){ ctx.fillStyle = 'rgba(255,0,0,.25)'; ctx.beginPath(); ctx.arc(tx*CS, ty*CS, CS*0.45, 0, Math.PI*2); ctx.fill(); }
+    });
+  }
+  for (const p of active) for (let h=0;h<4;h++){
+    if (anim && anim.p === p && anim.h === h) continue;
+    const [x, y] = cellOf(p, h);
+    const mi = (phase === 'choose') && p === cur ? moves.findIndex(m => m.h === h) : -1;
+    if (mi >= 0){
+      ctx.fillStyle = `rgba(255,255,120,${0.35 + 0.4*pulse})`; ctx.beginPath(); ctx.arc(x*CS, y*CS, CS*0.52, 0, Math.PI*2); ctx.fill();
+      if (mi === sel){ ctx.strokeStyle = '#111'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x*CS, y*CS, CS*0.5, 0, Math.PI*2); ctx.stroke(); }
+    }
+    drawHorse(p, x, y, { num: humanChoosing && mi >= 0 ? h+1 : 0, lift: mi === sel && mi >= 0 ? 2 + 3*pulse : 0 });
+  }
+  if (anim){
+    const fromPos = anim.idx === 0 ? anim.from : anim.path[anim.idx-1];
+    const [ax, ay] = posCell(anim.p, anim.h, fromPos);
+    const [bx, by] = posCell(anim.p, anim.h, anim.path[anim.idx]);
+    const t = Math.min(1, anim.t);
+    const x = ax + (bx-ax)*t, y = ay + (by-ay)*t;
+    drawHorse(anim.p, x, y, { lift: Math.sin(t*Math.PI)*12 });
+  }
+}
+
+let last = performance.now();
+function frame(now){
+  let dt = (now - last)/1000; last = now; if (dt > .1) dt = .1; if (dt < 0) dt = 0;
+  if (anim){
+    const stepDur = anim.from === -1 ? 0.3 : 0.16;
+    anim.t += dt / stepDur;
+    if (anim.t >= 1){
+      tone(500 + anim.idx*40, .04, 'sine', .05);
+      anim.idx++; anim.t = 0;
+      if (anim.idx >= anim.path.length){ const m = anim.m; finishMove(m); }
+    }
+  }
+  render(now); requestAnimationFrame(frame);
+}
+layout(); renderPlayers(); updateDiceUI();
+requestAnimationFrame(frame);
+window.__ludo = { get phase(){return phase;}, get cur(){return cur;}, get horses(){return horses;}, get moves(){return moves;}, setSeats:(s)=>{seats=s; buildSeats();}, legalMoves, TRACK, HOME };
+})();
+</script>
+</body>
+</html>
