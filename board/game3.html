@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Tiến Lên Miền Nam</title>
+<style>
+:root{--felt1:#1f7a4a;--felt2:#0d4a2b;--acc:#ffcf5a;--line:rgba(255,255,255,.16);--cw:56px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+html,body{margin:0;height:100%;overflow:hidden}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:#fff;background:#0b3a22 radial-gradient(ellipse at 50% 45%,var(--felt1) 0%,var(--felt2) 70%,#062616 100%)}
+.back{position:fixed;top:8px;left:8px;z-index:60;font-size:13px;color:#fff;background:rgba(0,0,0,.4);padding:5px 11px;border-radius:14px;text-decoration:none;border:1px solid var(--line)}
+#game{position:relative;max-width:900px;height:100%;margin:0 auto;display:grid;grid-template-rows:40px auto 1fr auto auto;padding:0 6px 6px}
+.topbar{display:flex;align-items:center;justify-content:flex-end;gap:6px;font-size:13px;padding-left:150px}
+.topbar button{padding:5px 9px;font-size:13px}
+.seat{display:flex;align-items:center;gap:6px;font-size:13px}
+.seat .av{width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;font-size:19px;border:2px solid rgba(255,255,255,.25);flex:none;transition:box-shadow .2s,border-color .2s}
+.seat.turn .av{border-color:var(--acc);box-shadow:0 0 0 3px rgba(255,207,90,.35),0 0 16px rgba(255,207,90,.7)}
+.seat .nm{font-weight:600}
+.seat .cnt{font-size:12px;opacity:.85}
+.seat .badge{font-size:11px;background:#e9b434;color:#2b1d00;border-radius:8px;padding:1px 6px;font-weight:700}
+.seat .bub{font-size:12px;background:rgba(0,0,0,.45);padding:2px 7px;border-radius:9px;opacity:0;transition:opacity .2s}
+.seat .bub.show{opacity:1}
+#north{justify-self:center;flex-direction:column;gap:2px;text-align:center}
+.mid{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:4px;min-height:0}
+#west,#east{flex-direction:column;text-align:center;gap:2px;width:74px}
+.backs{display:flex;justify-content:center}
+.mini{width:20px;height:28px;border-radius:3px;margin-left:-13px;border:1px solid rgba(255,255,255,.7);background:#7b1f2b repeating-linear-gradient(45deg,#8e2533 0 3px,#6a1824 3px 6px);box-shadow:0 1px 2px rgba(0,0,0,.4)}
+.mini:first-child{margin-left:0}
+#table{position:relative;height:100%;min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:50%/40%;border:2px dashed rgba(255,255,255,.12)}
+#pile{display:flex;justify-content:center;min-height:calc(var(--cw)*1.45)}
+#pile .card{margin-left:calc(var(--cw)*-.45);animation:drop .25s ease-out}
+#pile .card:first-child{margin-left:0}
+@keyframes drop{from{transform:translateY(-18px) scale(1.1);opacity:0}to{transform:none;opacity:1}}
+#pileLbl{font-size:13px;margin-top:6px;opacity:.9;text-align:center;min-height:18px}
+#msg{position:absolute;top:6px;left:50%;transform:translateX(-50%);font-size:13px;background:rgba(0,0,0,.55);padding:4px 10px;border-radius:10px;white-space:nowrap;opacity:0;transition:opacity .25s;pointer-events:none;z-index:5}
+#msg.show{opacity:1}
+#south{justify-content:center;padding:4px 0}
+#hand{position:relative;height:calc(var(--cw)*1.45 + 18px);margin-top:4px}
+#hand .card{position:absolute;bottom:0;transition:transform .15s,left .2s;cursor:pointer}
+#hand .card.sel{transform:translateY(-16px);box-shadow:0 0 0 2px var(--acc),0 6px 12px rgba(0,0,0,.4)}
+.controls{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;padding-top:6px}
+button{font:inherit;font-size:14px;color:#fff;background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:9px;padding:9px 14px;cursor:pointer;transition:background .15s,transform .1s}
+button:hover{background:rgba(0,0,0,.5)}
+button:active{transform:scale(.96)}
+button:disabled{opacity:.4;cursor:default}
+button.primary{background:linear-gradient(#ffd877,#e6a92a);color:#2a1a00;border-color:#ffe3a1;font-weight:700}
+/* cards */
+.card{width:var(--cw);height:calc(var(--cw)*1.42);border-radius:calc(var(--cw)*.1);background:linear-gradient(160deg,#ffffff,#f1ede4);color:#1b1b2a;box-shadow:0 2px 5px rgba(0,0,0,.45);position:relative;border:1px solid #c9c2b2;flex:none;overflow:hidden}
+.card.red{color:#c8202f}
+.card .cn{position:absolute;font-weight:800;line-height:.95;text-align:center;font-size:calc(var(--cw)*.27);letter-spacing:-1px}
+.card .cn small{display:block;font-size:calc(var(--cw)*.24);letter-spacing:0}
+.card .tl{top:calc(var(--cw)*.06);left:calc(var(--cw)*.06)}
+.card .br{bottom:calc(var(--cw)*.06);right:calc(var(--cw)*.06);transform:rotate(180deg)}
+.card .cc{position:absolute;inset:22% 14% 22% 24%;display:flex;align-items:center;justify-content:center;font-size:calc(var(--cw)*.55)}
+.card .face{position:absolute;inset:20% 16% 20% 22%;border-radius:calc(var(--cw)*.06);border:1.5px solid currentColor;display:flex;flex-direction:column;align-items:center;justify-content:center;background:repeating-linear-gradient(135deg,rgba(0,0,0,.04) 0 3px,transparent 3px 6px)}
+.card .face b{font-size:calc(var(--cw)*.42);font-family:Georgia,serif;line-height:1}
+.card .face i{font-style:normal;font-size:calc(var(--cw)*.24)}
+.overlay{position:fixed;inset:0;background:rgba(0,15,8,.75);display:flex;align-items:center;justify-content:center;z-index:50;padding:48px 16px 16px;backdrop-filter:blur(3px)}
+.hidden{display:none!important}
+.panel{background:linear-gradient(#17573a,#0e3b27);border:1px solid var(--line);border-radius:16px;padding:20px 18px;max-width:450px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.5);max-height:calc(100vh - 64px);overflow:auto}
+.panel h2{margin:0 0 6px;font-size:25px;text-align:center}
+.sub{text-align:center;opacity:.85;margin:0 0 10px;font-size:14px}
+.rules{font-size:13px;line-height:1.5;background:rgba(0,0,0,.22);border-radius:10px;padding:10px 12px;margin:10px 0}
+.rules ul{margin:4px 0 0;padding-left:18px}
+.big{width:100%;padding:12px;font-size:16px;margin-top:6px}
+.stats{font-size:13px;opacity:.9;text-align:center;margin-top:8px}
+table.rank{width:100%;border-collapse:collapse;margin:8px 0;font-size:15px}
+table.rank td{padding:6px 8px;border-bottom:1px solid var(--line)}
+table.rank td:last-child{text-align:right;font-weight:700}
+.demo{display:flex;justify-content:center;margin:6px 0 2px;--cw:40px}
+.demo .card{margin-left:-14px}.demo .card:first-child{margin-left:0}
+@media (max-width:480px){
+  #west,#east{width:58px}
+  .seat .av{width:30px;height:30px;font-size:16px}
+  .seat{font-size:12px}
+}
+</style>
+</head>
+<body>
+<a class="back" href="../index.html">← Danh sách game</a>
+<div id="game">
+  <div class="topbar"><span id="scoreTop"></span><button id="bSound">🔊</button><button id="bMenu">Menu</button></div>
+  <div class="seat" id="north"></div>
+  <div class="mid">
+    <div class="seat" id="west"></div>
+    <div id="table"><div id="msg"></div><div id="pile"></div><div id="pileLbl">Bàn trống</div></div>
+    <div class="seat" id="east"></div>
+  </div>
+  <div>
+    <div class="seat" id="south"></div>
+    <div id="hand"></div>
+  </div>
+  <div class="controls">
+    <button id="bHint">Gợi ý</button>
+    <button id="bClear">Bỏ chọn</button>
+    <button id="bPass">Bỏ lượt</button>
+    <button id="bPlay" class="primary">Đánh</button>
+  </div>
+</div>
+
+<div class="overlay" id="menu">
+  <div class="panel">
+    <h2>Tiến Lên Miền Nam</h2>
+    <p class="sub">Bạn và 3 máy — ai hết bài trước là Nhất!</p>
+    <div class="demo" id="demo"></div>
+    <button class="primary big" id="bStart">Chia bài</button>
+    <button class="big hidden" id="bResume">Tiếp tục ván đang chơi</button>
+    <div class="stats" id="menuStats"></div>
+    <div class="rules"><b>Luật chơi</b>
+      <ul>
+        <li>Mỗi người 13 lá. Thứ tự: 3 &lt; 4 &lt; … &lt; K &lt; A &lt; 2. Chất: ♠ Bích &lt; ♣ Chuồn &lt; ♦ Rô &lt; ♥ Cơ.</li>
+        <li>Ván đầu, ai có <b>3♠</b> đi trước và phải đánh kèm lá 3♠. Các ván sau người về Nhất đi trước.</li>
+        <li>Bộ hợp lệ: lá lẻ, đôi, sám cô (bộ ba), sảnh (≥3 lá liên tiếp, không có 2), tứ quý, đôi thông (≥3 đôi liên tiếp).</li>
+        <li>Phải chặn bằng bộ cùng loại, cùng số lá và lớn hơn (so lá cao nhất). Bỏ lượt thì không được đánh lại đến hết vòng.</li>
+        <li><b>Chặt heo:</b> 3 đôi thông chặt được 1 heo (lá 2); tứ quý chặt 1 heo, đôi heo, 3 đôi thông; 4 đôi thông chặt đôi heo, tứ quý.</li>
+        <li><b>Tới trắng:</b> có tứ quý 2, sảnh rồng (3→A), 6 đôi hoặc 5 đôi thông khi chia bài là thắng ngay.</li>
+        <li>Điểm mỗi ván: Nhất +3, Nhì +1, Ba −1, Bét −3.</li>
+        <li>Chạm lá bài để chọn, bấm <b>Đánh</b> hoặc <b>Bỏ lượt</b>.</li>
+      </ul></div>
+
+  </div>
+</div>
+
+<div class="overlay hidden" id="endScr">
+  <div class="panel" style="text-align:center">
+    <div style="font-size:42px" id="endIcon">🏆</div>
+    <h2 id="endTitle"></h2>
+    <p class="sub" id="endSub"></p>
+    <table class="rank" id="rankTbl"></table>
+    <button class="primary big" id="bAgain">Ván tiếp theo</button>
+    <button class="big" id="bEndMenu">Menu</button>
+    <div class="stats" id="endStats"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const RANKS=['3','4','5','6','7','8','9','10','J','Q','K','A','2'];
+const SUITS=['♠','♣','♦','♥'];
+const NAMES=['Bạn','Lan','Tuấn','Minh'];
+const AVS=['😎','👩','🧔','👦'];
+const SEATS=['south','east','north','west'];
+const PLACE=['Nhất','Nhì','Ba','Bét'];
+const PTS=[3,1,-1,-3];
+const rankOf=id=>id>>2;
+
+/* ---------- state ---------- */
+let hands=[[],[],[],[]],cur=null,passed=[false,false,false,false],finished=[],turn=0,firstGame=true,mustHas3S=false;
+let selected=new Set(),playing=false,busy=false,sound=true,lastLeader=0,timer=null,session=[0,0,0,0];
+
+/* ---------- stats ---------- */
+const SKEY='tienlen_stats_v1';
+let stats={played:0,first:0,last:0,points:0,white:0};
+try{const s=JSON.parse(localStorage.getItem(SKEY));if(s&&typeof s.played==='number')stats=Object.assign(stats,s);}catch(e){}
+function saveStats(){try{localStorage.setItem(SKEY,JSON.stringify(stats));}catch(e){}}
+function statsText(){return `Đã chơi ${stats.played} ván · Về Nhất ${stats.first} · Về Bét ${stats.last} · Tổng điểm ${stats.points>0?'+':''}${stats.points}`;}
+
+/* ---------- sound ---------- */
+let actx=null;
+function beep(f,d,type,vol,delay){
+  if(!sound)return;
+  try{if(!actx)actx=new (window.AudioContext||window.webkitAudioContext)();
+    const t0=actx.currentTime+(delay||0);const o=actx.createOscillator(),g=actx.createGain();o.type=type||'sine';o.frequency.value=f;
+    g.gain.setValueAtTime(vol||.1,t0);g.gain.exponentialRampToValueAtTime(.0001,t0+d);o.connect(g);g.connect(actx.destination);o.start(t0);o.stop(t0+d);}catch(e){}
+}
+const sndPlay=()=>{beep(420,.06,'triangle',.08);beep(260,.08,'sine',.06,.03);};
+const sndChop=()=>{beep(120,.3,'sawtooth',.08);beep(90,.35,'square',.05,.05);};
+
+/* ---------- combos ---------- */
+function analyze(cards){
+  const a=[...cards].sort((x,y)=>x-y),n=a.length;if(!n)return null;
+  const rk=a.map(rankOf),top=a[n-1];
+  if(n===1)return{t:'single',n,top};
+  if(rk.every(r=>r===rk[0])){if(n===2)return{t:'pair',n,top};if(n===3)return{t:'triple',n,top};if(n===4)return{t:'quad',n,top};return null;}
+  if(n>=3&&rk[n-1]<12&&rk.every((r,i)=>i===0||r===rk[i-1]+1))return{t:'seq',n,top};
+  if(n>=6&&n%2===0&&rk[n-1]<12){
+    let ok=true;for(let i=0;i<n;i+=2){if(rk[i]!==rk[i+1])ok=false;if(i>0&&rk[i]!==rk[i-2]+1)ok=false;}
+    if(ok)return{t:'dt',n,k:n/2,top};
+  }
+  return null;
+}
+function beats(a,b){
+  if(!a)return false;if(!b)return true;
+  const two=rankOf(b.top)===12;
+  if(a.t===b.t&&a.n===b.n)return a.top>b.top;
+  if(b.t==='single'&&two)return a.t==='quad'||(a.t==='dt'&&a.k>=3);
+  if(b.t==='pair'&&two)return a.t==='quad'||(a.t==='dt'&&a.k>=4);
+  if(b.t==='quad')return a.t==='dt'&&a.k>=4;
+  if(b.t==='dt'&&b.k===3)return a.t==='quad'||(a.t==='dt'&&a.k>=4);
+  if(b.t==='dt')return a.t==='dt'&&a.k>b.k;
+  return false;
+}
+function comboName(c){
+  switch(c.t){case'single':return'1 lá';case'pair':return'Đôi';case'triple':return'Sám cô';case'quad':return'Tứ quý';case'seq':return'Sảnh '+c.n+' lá';case'dt':return c.k+' đôi thông';}
+  return'';
+}
+function cardName(id){return RANKS[rankOf(id)]+SUITS[id&3];}
+
+/* ---------- AI ---------- */
+function byRank(hand){const g=Array.from({length:13},()=>[]);for(const id of[...hand].sort((x,y)=>x-y))g[rankOf(id)].push(id);return g;}
+function kComb(arr,k){const res=[];const rec=(st,acc)=>{if(acc.length===k){res.push(acc.slice());return;}for(let i=st;i<arr.length;i++){acc.push(arr[i]);rec(i+1,acc);acc.pop();}};rec(0,[]);return res;}
+function genCombos(hand){
+  const g=byRank(hand),out=[];
+  for(const id of hand)out.push([id]);
+  for(let r=0;r<13;r++){const x=g[r];if(x.length>=2)out.push(...kComb(x,2));if(x.length>=3)out.push(...kComb(x,3));if(x.length===4)out.push(x.slice());}
+  // sequences
+  for(let st=0;st<12;st++){
+    for(let L=3;st+L-1<12;L++){
+      let ok=true;for(let r=st;r<st+L;r++)if(!g[r].length){ok=false;break;}
+      if(!ok)break;
+      const base=[];for(let r=st;r<st+L-1;r++)base.push(g[r][0]);
+      for(const t of g[st+L-1])out.push(base.concat([t]));
+    }
+  }
+  // consecutive pairs
+  for(let st=0;st<12;st++){
+    for(let k=3;st+k-1<12;k++){
+      let ok=true;for(let r=st;r<st+k;r++)if(g[r].length<2){ok=false;break;}
+      if(!ok)break;
+      const base=[];for(let r=st;r<st+k-1;r++)base.push(g[r][0],g[r][1]);
+      for(const pr of kComb(g[st+k-1],2))out.push(base.concat(pr));
+    }
+  }
+  return out;
+}
+function legalPlays(hand,target,need3S){
+  const res=[];const seen=new Set();
+  for(const c of genCombos(hand)){
+    const key=[...c].sort((a,b)=>a-b).join(',');if(seen.has(key))continue;seen.add(key);
+    const combo=analyze(c);if(!combo)continue;
+    if(need3S&&!c.includes(0))continue;
+    if(!beats(combo,target))continue;
+    res.push({cards:c,combo});
+  }
+  return res;
+}
+function structInfo(hand){
+  const cnt=Array(13).fill(0);for(const id of hand)cnt[rankOf(id)]++;
+  const inRun=Array(13).fill(false);
+  let r=0;while(r<12){if(!cnt[r]){r++;continue;}let e=r;while(e+1<12&&cnt[e+1])e++;if(e-r+1>=3)for(let k=r;k<=e;k++)inRun[k]=true;r=e+1;}
+  return{cnt,inRun};
+}
+function playCost(p,info,leading,hand,ctx){
+  const used=Array(13).fill(0);for(const id of p.cards)used[rankOf(id)]++;
+  const c0=p.combo;let c=0;
+  if(p.cards.length===hand.length)return -1000;
+  for(let r=0;r<13;r++){
+    if(!used[r])continue;
+    if(info.cnt[r]>used[r]&&info.cnt[r]>=2)c+=info.cnt[r]===4?40:(info.cnt[r]===3&&used[r]===2?3:7);
+    if((c0.t==='single'||c0.t==='pair'||c0.t==='triple')&&info.inRun[r])c+=4;
+  }
+  if(used[12])c+=c0.t==='single'?16:24;
+  if(c0.t==='quad'||(c0.t==='dt'&&c0.k>=3))c+=32;
+  const topR=rankOf(c0.top),lowR=rankOf(Math.min(...p.cards));
+  if(leading){
+    c+=lowR*3-c0.n*2.6;
+    if(c0.t==='single'&&ctx.nextDanger)c+=25-topR*2;
+  }else c+=topR*2-c0.n*.4;
+  // if the rest of the hand after this play is a single combo, it's great
+  const rest=hand.filter(id=>!p.cards.includes(id));
+  if(rest.length&&analyze(rest))c-=25;
+  return c;
+}
+function aiChoose(pi){
+  const hand=hands[pi];
+  const leading=!cur;
+  const plays=legalPlays(hand,cur?cur.combo:null,mustHas3S&&leading);
+  if(!plays.length)return null;
+  const info=structInfo(hand);
+  const nextP=nextActive(pi,true);
+  const minOpp=Math.min(...[0,1,2,3].filter(q=>q!==pi&&!finished.includes(q)).map(q=>hands[q].length));
+  const ctx={nextDanger:nextP>=0&&hands[nextP].length===1};
+  for(const p of plays)p.cost=playCost(p,info,leading,hand,ctx);
+  plays.sort((a,b)=>a.cost-b.cost);
+  const best=plays[0];
+  if(leading)return best;
+  const urgent=minOpp<=3||hand.length<=5;
+  const curTop=rankOf(cur.combo.top);
+  const thr=24+(curTop>=10?18:0)+(curTop===12?20:0);
+  if(!urgent&&best.cost>thr)return null;
+  return best;
+}
+
+/* ---------- rendering ---------- */
+function cardHTML(id,extra){
+  const r=rankOf(id),s=id&3,red=s>=2;const rk=RANKS[r],su=SUITS[s];
+  let center;
+  if(r>=8&&r<=10){center=`<div class="face"><b>${rk}</b><i>${su}</i></div>`;}
+  else if(r===11){center=`<div class="cc" style="font-size:calc(var(--cw)*.75)">${su}</div>`;}
+  else center=`<div class="cc">${su}</div>`;
+  return `<div class="card${red?' red':''}${extra||''}" data-id="${id}"><div class="cn tl">${rk}<small>${su}</small></div>${center}<div class="cn br">${rk}<small>${su}</small></div></div>`;
+}
+let bubbles=['','','',''];
+function renderSeats(){
+  for(let p=0;p<4;p++){
+    const el=$(SEATS[p]);
+    const fin=finished.indexOf(p);
+    const n=hands[p].length;
+    let backs='';
+    if(p!==0){const shown=Math.min(n,p===2?13:7);for(let k=0;k<shown;k++)backs+='<div class="mini"></div>';}
+    const badge=fin>=0?`<span class="badge">${PLACE[fin]}</span>`:(n===1&&playing?'<span class="badge" style="background:#ff6b5a;color:#fff">Báo 1</span>':'');
+    const info=`<div><div class="nm">${NAMES[p]} ${badge}</div><div class="cnt">${p===0?'':n+' lá'}${p!==0?' · ':''}${session[p]>0?'+':''}${session[p]} điểm</div></div>`;
+    el.className='seat'+(playing&&turn===p&&fin<0?' turn':'');
+    if(p===0)el.innerHTML=`<div class="av">${AVS[p]}</div>${info}<span class="bub${bubbles[p]?' show':''}">${bubbles[p]}</span>`;
+    else if(p===2)el.innerHTML=`<div style="display:flex;align-items:center;gap:6px"><div class="av">${AVS[p]}</div>${info}</div><div class="backs">${backs}</div><span class="bub${bubbles[p]?' show':''}">${bubbles[p]||'&nbsp;'}</span>`;
+    else el.innerHTML=`<div class="av" style="margin:0 auto">${AVS[p]}</div>${info}<div class="backs" style="transform:scale(.85)">${backs}</div><span class="bub${bubbles[p]?' show':''}">${bubbles[p]||'&nbsp;'}</span>`;
+    el.id=SEATS[p];
+  }
+  $('scoreTop').textContent='';
+}
+function layoutHand(){
+  const h=$('hand');const W=h.clientWidth;
+  const ids=hands[0];
+  const cw=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--cw'))||56;
+  const n=ids.length;
+  const step=n>1?Math.min(cw*0.78,(W-cw-4)/(n-1)):0;
+  const total=cw+step*(n-1);const off=(W-total)/2;
+  h.innerHTML=ids.map((id,i)=>cardHTML(id,selected.has(id)?' sel':'')).join('');
+  [...h.children].forEach((el,i)=>{el.style.left=(off+i*step)+'px';el.style.zIndex=i;});
+}
+function renderPile(){
+  const pile=$('pile');
+  if(!cur){pile.innerHTML='';$('pileLbl').textContent=playing?(turn===0?'Bạn được đánh tự do':NAMES[turn]+' đánh tự do'):'Bàn trống';return;}
+  pile.innerHTML=[...cur.cards].sort((a,b)=>a-b).map(id=>cardHTML(id)).join('');
+  $('pileLbl').textContent=NAMES[cur.by]+': '+comboName(cur.combo);
+}
+function updateControls(){
+  const myTurn=playing&&turn===0&&!busy&&!finished.includes(0);
+  const sel=[...selected];const combo=analyze(sel);
+  let ok=myTurn&&combo&&beats(combo,cur?cur.combo:null)&&(!(mustHas3S&&!cur)||sel.includes(0));
+  $('bPlay').disabled=!ok;
+  $('bPass').disabled=!(myTurn&&cur);
+  $('bHint').disabled=!myTurn;
+  $('bClear').disabled=!selected.size;
+}
+function render(){renderSeats();renderPile();layoutHand();updateControls();}
+let msgT=null;
+function toast(t,ms){const m=$('msg');m.textContent=t;m.classList.add('show');clearTimeout(msgT);msgT=setTimeout(()=>m.classList.remove('show'),ms||1600);}
+function sizeCards(){
+  const w=Math.min(window.innerWidth,900),h=window.innerHeight;
+  let cw=Math.max(40,Math.min(72,w/7.2,h/11));
+  document.documentElement.style.setProperty('--cw',Math.round(cw)+'px');
+}
+
+/* ---------- game flow ---------- */
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
+function whiteWin(hand){
+  const g=byRank(hand);const cnt=g.map(x=>x.length);
+  if(cnt[12]===4)return'Tứ quý heo';
+  if(cnt.slice(0,12).every(c=>c>=1))return'Sảnh rồng';
+  if(cnt.reduce((s,c)=>s+(c>>1),0)>=6)return'6 đôi';
+  for(let st=0;st+5<=12;st++){let ok=true;for(let r=st;r<st+5;r++)if(cnt[r]<2)ok=false;if(ok)return'5 đôi thông';}
+  return null;
+}
+function deal(){
+  const deck=shuffle([...Array(52).keys()]);
+  hands=[0,1,2,3].map(p=>deck.slice(p*13,p*13+13).sort((a,b)=>a-b));
+  cur=null;passed=[false,false,false,false];finished=[];selected.clear();bubbles=['','','',''];
+  playing=true;busy=false;clearTimeout(timer);
+  if(firstGame){turn=hands.findIndex(h=>h.includes(0));mustHas3S=true;}
+  else{turn=lastLeader;mustHas3S=false;}
+  $('menu').classList.add('hidden');$('endScr').classList.add('hidden');
+  render();
+  // instant wins
+  for(let k=0;k<4;k++){const p=(turn+k)%4;const w=whiteWin(hands[p]);
+    if(w){toast(NAMES[p]+' tới trắng: '+w+'!',2500);
+      const order=[p,...[0,1,2,3].filter(q=>q!==p).sort((a,b)=>hands[a].length-hands[b].length||a-b)];
+      if(p===0)stats.white++;
+      setTimeout(()=>endGame(order,NAMES[p]+' tới trắng ('+w+')'),1600);playing=false;render();return;}
+  }
+  toast(firstGame?NAMES[turn]+' có 3♠, đi trước':NAMES[turn]+' đi trước',1800);
+  scheduleTurn();
+}
+function nextActive(from,includePassed){
+  for(let k=1;k<=4;k++){const q=(from+k)%4;if(finished.includes(q))continue;if(!includePassed&&passed[q])continue;return q;}
+  return -1;
+}
+function scheduleTurn(){
+  render();
+  if(!playing)return;
+  if(turn!==0){
+    busy=true;updateControls();
+    const fast=finished.includes(0);
+    clearTimeout(timer);
+    timer=setTimeout(()=>{busy=false;botAct(turn);},fast?350:850);
+  }
+}
+function botAct(p){
+  if(!playing||turn!==p)return;
+  if(!$('menu').classList.contains('hidden')){clearTimeout(timer);timer=setTimeout(()=>botAct(p),400);return;}
+  const choice=aiChoose(p);
+  if(choice){
+    // double check legality
+    const cb=analyze(choice.cards);
+    if(cb&&beats(cb,cur?cur.combo:null)&&choice.cards.every(id=>hands[p].includes(id)))doPlay(p,choice.cards);
+    else doPass(p);
+  }else{
+    if(!cur){ // must lead: play lowest card (fallback, should not happen)
+      const low=Math.min(...hands[p]);doPlay(p,[low]);
+    }else doPass(p);
+  }
+}
+const playLog=[];
+function doPlay(p,cards){
+  const combo=analyze(cards);
+  playLog.push({p,cards:[...cards],prev:cur?cur.combo:null,inHand:cards.every(id=>hands[p].includes(id)),need3S:mustHas3S});
+  if(playLog.length>500)playLog.shift();
+  const chop=cur&&combo.t!==cur.combo.t;
+  hands[p]=hands[p].filter(id=>!cards.includes(id));
+  cur={cards:[...cards],combo,by:p};
+  mustHas3S=false;
+  bubbles=bubbles.map((b,i)=>passed[i]&&b?b:'');bubbles[p]='';
+  if(chop){sndChop();toast(NAMES[p]+' chặt! '+comboName(combo),1800);}else sndPlay();
+  if(!hands[p].length){
+    finished.push(p);
+    toast(NAMES[p]+' về '+PLACE[finished.length-1]+'!',1600);
+    beep(880,.2,'triangle',.08);
+    const remain=[0,1,2,3].filter(q=>!finished.includes(q));
+    if(remain.length===1){finished.push(remain[0]);endGame(finished.slice(),'');return;}
+  }
+  advance(p);
+}
+function doPass(p){
+  passed[p]=true;bubbles[p]='Bỏ lượt';
+  beep(200,.05,'sine',.04);
+  advance(p);
+}
+function advance(p){
+  const owner=cur?cur.by:-1;
+  const others=[0,1,2,3].filter(q=>!finished.includes(q)&&q!==owner);
+  if(cur&&others.every(q=>passed[q])){
+    // round ends
+    let leader=owner;
+    if(finished.includes(leader))leader=nextActive(owner,true);
+    cur=null;passed=[false,false,false,false];bubbles=['','','',''];
+    turn=leader;
+    render();
+    clearTimeout(timer);timer=setTimeout(()=>{if(playing){toast('Vòng mới — '+NAMES[turn]+' đánh',1200);scheduleTurn();}},turn===0?300:500);
+    return;
+  }
+  turn=nextActive(p,false);
+  selected.clear();
+  scheduleTurn();
+}
+function endGame(order,reason){
+  playing=false;clearTimeout(timer);
+  for(let i=0;i<4;i++)session[order[i]]+=PTS[i];
+  const myPlace=order.indexOf(0);
+  stats.played++;if(myPlace===0)stats.first++;if(myPlace===3)stats.last++;stats.points+=PTS[myPlace];
+  saveStats();
+  lastLeader=order[0];firstGame=false;
+  render();
+  $('endIcon').textContent=myPlace===0?'🏆':myPlace===3?'😢':'🃏';
+  $('endTitle').textContent=myPlace===0?'Bạn về Nhất!':'Bạn về '+PLACE[myPlace];
+  $('endSub').textContent=reason||'Kết thúc ván bài';
+  $('rankTbl').innerHTML=order.map((p,i)=>`<tr><td>${PLACE[i]}</td><td>${AVS[p]} ${NAMES[p]}</td><td>${PTS[i]>0?'+':''}${PTS[i]}</td><td style="opacity:.75;font-weight:400">${session[p]>0?'+':''}${session[p]}</td></tr>`).join('');
+  $('endStats').textContent=statsText();
+  if(myPlace===0)[523,659,784,1047].forEach((f,i)=>beep(f,.25,'triangle',.1,i*.12));
+  setTimeout(()=>$('endScr').classList.remove('hidden'),900);
+}
+
+/* ---------- input ---------- */
+$('hand').addEventListener('click',e=>{
+  const c=e.target.closest('.card');if(!c||!playing)return;
+  const id=+c.dataset.id;
+  if(selected.has(id))selected.delete(id);else selected.add(id);
+  beep(700,.03,'sine',.04);
+  c.classList.toggle('sel',selected.has(id));
+  updateControls();
+});
+$('bPlay').onclick=()=>{
+  if(!(playing&&turn===0&&!busy))return;
+  const sel=[...selected];const combo=analyze(sel);
+  if(!combo){toast('Bộ bài không hợp lệ');return;}
+  if(mustHas3S&&!cur&&!sel.includes(0)){toast('Ván đầu phải đánh kèm 3♠');return;}
+  if(!beats(combo,cur?cur.combo:null)){toast('Không chặn được bài trên bàn');return;}
+  selected.clear();doPlay(0,sel);
+};
+$('bPass').onclick=()=>{if(playing&&turn===0&&cur&&!busy){selected.clear();doPass(0);}};
+$('bClear').onclick=()=>{selected.clear();layoutHand();updateControls();};
+$('bHint').onclick=()=>{
+  if(!(playing&&turn===0))return;
+  const plays=legalPlays(hands[0],cur?cur.combo:null,mustHas3S&&!cur);
+  if(!plays.length){toast('Không có bài chặn — hãy bỏ lượt');return;}
+  const info=structInfo(hands[0]);plays.forEach(p=>p.cost=playCost(p,info,!cur,hands[0],{nextDanger:false}));plays.sort((a,b)=>a.cost-b.cost);
+  selected=new Set(plays[0].cards);layoutHand();updateControls();
+};
+$('bStart').onclick=deal;$('bAgain').onclick=deal;
+$('bMenu').onclick=()=>{$('menuStats').textContent=statsText();$('bStart').textContent=playing?'Chia lại (bỏ ván này)':'Chia bài';$('bResume').classList.toggle('hidden',!playing);$('menu').classList.remove('hidden');};
+$('bResume').onclick=()=>$('menu').classList.add('hidden');
+$('bEndMenu').onclick=()=>{$('endScr').classList.add('hidden');$('menuStats').textContent=statsText();$('bStart').textContent='Chia bài';$('menu').classList.remove('hidden');};
+$('bSound').onclick=()=>{sound=!sound;$('bSound').textContent=sound?'🔊':'🔇';};
+window.addEventListener('resize',()=>{sizeCards();layoutHand();});
+$('demo').innerHTML=[48,49,50,51,44,0].map(id=>cardHTML(id)).join('');
+$('menuStats').textContent=statsText();
+sizeCards();render();
+window.__tl={get hands(){return hands;},get turn(){return turn;},get cur(){return cur;},get playing(){return playing;},get finished(){return finished;},analyze,beats,legalPlays,get mustHas3S(){return mustHas3S;},get busy(){return busy;},playLog,botAct:p=>botAct(p)};
+})();
+</script>
+</body>
+</html>

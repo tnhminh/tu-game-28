@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Xếp Bài Solitaire</title>
+<style>
+:root{--acc:#ffd36b;--line:rgba(255,255,255,.18);--cw:80px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+html,body{margin:0;min-height:100%;overflow-x:hidden}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:#fff;background:#173a5c radial-gradient(ellipse at 50% 0%,#2a6596 0%,#173a5c 55%,#0c2238 100%) fixed;min-height:100vh;overscroll-behavior:none}
+.back{position:fixed;top:8px;left:8px;z-index:60;font-size:13px;color:#fff;background:rgba(0,0,0,.4);padding:5px 11px;border-radius:14px;text-decoration:none;border:1px solid var(--line)}
+#wrap{max-width:780px;margin:0 auto;padding:42px 6px 10px}
+.hud{display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.info{display:flex;gap:10px;font-size:14px;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:10px;padding:6px 10px}
+.info b{color:var(--acc);font-variant-numeric:tabular-nums}
+.btns{display:flex;gap:5px;flex-wrap:wrap}
+button{font:inherit;font-size:14px;color:#fff;background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:9px;padding:7px 11px;cursor:pointer;transition:background .15s,transform .1s}
+button:hover{background:rgba(0,0,0,.45)}
+button:active{transform:scale(.96)}
+button:disabled{opacity:.4;cursor:default}
+button.primary{background:linear-gradient(#ffdf8a,#e8a92c);color:#2a1a00;border-color:#ffe7ad;font-weight:700}
+#auto{animation:pulse 1.2s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 4px rgba(255,211,107,.35)}}
+#board{position:relative;z-index:0;touch-action:none;margin:0 auto}
+.slot{position:absolute;width:var(--cw);height:calc(var(--cw)*1.4);border-radius:calc(var(--cw)*.09);border:2px dashed rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.3);font-size:calc(var(--cw)*.42)}
+.slot.stock{cursor:pointer}
+.c{position:absolute;width:var(--cw);height:calc(var(--cw)*1.4);border-radius:calc(var(--cw)*.09);transition:left .18s ease,top .18s ease;will-change:left,top;cursor:pointer}
+.c.drag{transition:none!important;filter:drop-shadow(0 10px 12px rgba(0,0,0,.45))}
+.c .fr,.c .bk{position:absolute;inset:0;border-radius:inherit;backface-visibility:hidden}
+.c .fr{background:linear-gradient(165deg,#fffdf7,#f2ecdf);border:1px solid #b9b2a2;color:#202034;box-shadow:0 1px 3px rgba(0,0,0,.35);overflow:hidden}
+.c.red .fr{color:#cf2a36}
+.c .bk{display:none;border:2px solid #f5f0e4;box-shadow:0 1px 3px rgba(0,0,0,.4);background:
+ radial-gradient(circle at 50% 50%,rgba(255,211,107,.9) 0 6%,transparent 7%),
+ radial-gradient(circle at 50% 50%,transparent 0 22%,rgba(255,211,107,.55) 23% 25%,transparent 26%),
+ repeating-conic-gradient(from 0deg at 50% 50%,#1e6a63 0 15deg,#175650 15deg 30deg),#175650}
+.c.down .bk{display:block}.c.down .fr{display:none}
+.c .k{position:absolute;top:4%;left:6%;font-weight:800;line-height:.9;text-align:center;font-size:calc(var(--cw)*.25);letter-spacing:-1px}
+.c .k span{display:block;font-size:calc(var(--cw)*.22);letter-spacing:0}
+.c .k2{position:absolute;top:4%;right:6%;font-size:calc(var(--cw)*.22)}
+.c .mid{position:absolute;left:0;right:0;bottom:8%;top:34%;display:flex;align-items:center;justify-content:center;font-size:calc(var(--cw)*.55)}
+.c .fc{position:absolute;left:18%;right:18%;top:36%;bottom:8%;border:1.5px solid currentColor;border-radius:calc(var(--cw)*.06);display:flex;flex-direction:column;align-items:center;justify-content:center;background:repeating-linear-gradient(45deg,rgba(0,0,0,.05) 0 2px,transparent 2px 5px)}
+.c .fc b{font-family:Georgia,serif;font-size:calc(var(--cw)*.36);line-height:1}
+.c .fc i{font-style:normal;font-size:calc(var(--cw)*.2)}
+.c.hint .fr{box-shadow:0 0 0 3px var(--acc)}
+.overlay{position:fixed;inset:0;background:rgba(4,14,26,.75);display:flex;align-items:center;justify-content:center;z-index:50;padding:48px 16px 16px;backdrop-filter:blur(3px)}
+.hidden{display:none!important}
+.panel{background:linear-gradient(#22507a,#163655);border:1px solid var(--line);border-radius:16px;padding:20px 18px;max-width:430px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.5);max-height:calc(100vh - 64px);overflow:auto}
+.panel h2{margin:0 0 6px;font-size:25px;text-align:center}
+.sub{text-align:center;opacity:.85;margin:0 0 10px;font-size:14px}
+.opt label{display:block;font-size:13px;opacity:.8;margin-bottom:5px}
+.seg{display:flex;gap:4px;background:rgba(0,0,0,.25);border-radius:10px;padding:3px}
+.seg button{flex:1;background:transparent;border:none;padding:8px 4px}
+.seg button.on{background:#3a6fa0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
+.rules{font-size:13px;line-height:1.5;background:rgba(0,0,0,.22);border-radius:10px;padding:10px 12px;margin:12px 0}
+.rules ul{margin:4px 0 0;padding-left:18px}
+.big{width:100%;padding:12px;font-size:16px;margin-top:6px}
+.stats{font-size:13px;opacity:.9;text-align:center;margin-top:8px;line-height:1.5}
+</style>
+</head>
+<body>
+<a class="back" href="../index.html">← Danh sách game</a>
+<div id="wrap">
+  <div class="hud">
+    <div class="info">⏱ <b id="time">0:00</b> · Nước: <b id="moves">0</b></div>
+    <div class="btns">
+      <button id="bUndo">↶ Hoàn tác</button>
+      <button id="auto" class="primary hidden">Tự hoàn thành</button>
+      <button id="bNew">Ván mới</button>
+      <button id="bMenu">Menu</button>
+      <button id="bSound">🔊</button>
+    </div>
+  </div>
+  <div id="board"></div>
+</div>
+
+<div class="overlay" id="menu">
+  <div class="panel">
+    <h2>Xếp Bài Solitaire</h2>
+    <p class="sub">Đưa cả 52 lá lên 4 ô đích theo chất, từ A đến K.</p>
+    <div class="opt"><label>Cách rút bài</label>
+      <div class="seg" id="segDraw"><button data-v="1" class="on">Rút 1 lá</button><button data-v="3">Rút 3 lá</button></div></div>
+    <div class="rules"><b>Luật chơi</b>
+      <ul>
+        <li>7 cột bài: xếp giảm dần (K → A), xen kẽ màu đỏ – đen. Có thể chuyển cả dãy bài đã lật.</li>
+        <li>Chỉ quân <b>K</b> (hoặc dãy bắt đầu bằng K) được đặt vào cột trống.</li>
+        <li>4 ô đích: xếp từng chất từ <b>A</b> lên <b>K</b>.</li>
+        <li>Chạm vào chồng bài úp để rút; hết bài thì chạm để quay lại.</li>
+        <li><b>Kéo thả</b> để di chuyển, hoặc <b>chạm</b> vào lá bài để tự động đưa tới vị trí hợp lệ.</li>
+        <li>Khi mọi lá đã lật, bấm "Tự hoàn thành" để kết thúc nhanh.</li>
+      </ul></div>
+    <button class="primary big" id="bStart">Chia bài</button>
+    <button class="big hidden" id="bResume">Tiếp tục ván đang chơi</button>
+    <div class="stats" id="menuStats"></div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="endScr">
+  <div class="panel" style="text-align:center">
+    <div style="font-size:44px">🏆</div>
+    <h2>Bạn đã thắng!</h2>
+    <p class="sub" id="endSub"></p>
+    <button class="primary big" id="bAgain">Chơi ván mới</button>
+    <button class="big" id="bEndMenu">Menu</button>
+    <div class="stats" id="endStats"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const RANKS=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+const SUITS=['♠','♥','♣','♦'];
+const suitOf=id=>Math.floor(id/13),rankOf=id=>id%13,isRed=id=>suitOf(id)%2===1;
+const board=$('board');
+
+let S=null,drawN=1,undoStack=[],moves=0,startT=0,elapsed=0,tick=null,won=false,sound=true,autoRunning=false,started=false;
+let cw=80,ch=112,gap=8,W=600,tabY=130;
+const els=[];const slots={};
+
+/* ---------- stats ---------- */
+const SKEY='solitaire_stats_v1';
+let stats={d1:{played:0,won:0,bestTime:0,bestMoves:0},d3:{played:0,won:0,bestTime:0,bestMoves:0}};
+try{const s=JSON.parse(localStorage.getItem(SKEY));if(s&&s.d1&&s.d3)stats=s;}catch(e){}
+function saveStats(){try{localStorage.setItem(SKEY,JSON.stringify(stats));}catch(e){}}
+function fmt(t){t=Math.floor(t);return Math.floor(t/60)+':'+String(t%60).padStart(2,'0');}
+function statsText(){
+  return ['d1','d3'].map(k=>{const s=stats[k];return `<b>${k==='d1'?'Rút 1':'Rút 3'}</b>: thắng ${s.won}/${s.played} ván`+(s.won?` · nhanh nhất ${fmt(s.bestTime)} · ít nước nhất ${s.bestMoves}`:'');}).join('<br>');
+}
+
+/* ---------- sound ---------- */
+let actx=null;
+function beep(f,d,type,vol,delay){
+  if(!sound)return;
+  try{if(!actx)actx=new (window.AudioContext||window.webkitAudioContext)();
+    const t0=actx.currentTime+(delay||0);const o=actx.createOscillator(),g=actx.createGain();o.type=type||'sine';o.frequency.value=f;
+    g.gain.setValueAtTime(vol||.08,t0);g.gain.exponentialRampToValueAtTime(.0001,t0+d);o.connect(g);g.connect(actx.destination);o.start(t0);o.stop(t0+d);}catch(e){}
+}
+const sFlip=()=>beep(520,.05,'triangle',.06),sPlace=()=>beep(330,.07,'sine',.08),sFound=()=>{beep(660,.08,'triangle',.07);beep(990,.1,'triangle',.05,.05);},sBad=()=>beep(150,.12,'square',.04);
+
+/* ---------- elements ---------- */
+function makeCardEl(id){
+  const d=document.createElement('div');
+  const r=rankOf(id),s=suitOf(id),rk=RANKS[r],su=SUITS[s];
+  d.className='c'+(isRed(id)?' red':'');d.dataset.id=id;
+  let mid;
+  if(r>=10)mid=`<div class="fc"><b>${rk}</b><i>${su}</i></div>`;
+  else if(r===0)mid=`<div class="mid" style="font-size:calc(var(--cw)*.7)">${su}</div>`;
+  else mid=`<div class="mid">${su}</div>`;
+  d.innerHTML=`<div class="fr"><div class="k">${rk}</div><div class="k2">${su}</div>${mid}</div><div class="bk"></div>`;
+  return d;
+}
+function makeSlot(key,cls,txt){const d=document.createElement('div');d.className='slot '+(cls||'');d.innerHTML=txt||'';board.appendChild(d);slots[key]=d;return d;}
+function buildDOM(){
+  board.innerHTML='';
+  makeSlot('stock','stock','↻');makeSlot('waste','','');
+  for(let i=0;i<4;i++)makeSlot('f'+i,'','A');
+  for(let i=0;i<7;i++)makeSlot('t'+i,'','K');
+  for(let id=0;id<52;id++){els[id]=makeCardEl(id);board.appendChild(els[id]);}
+}
+
+/* ---------- game setup ---------- */
+function newGame(){
+  const deck=[...Array(52).keys()];
+  for(let i=51;i>0;i--){const j=Math.random()*(i+1)|0;[deck[i],deck[j]]=[deck[j],deck[i]];}
+  S={stock:[],waste:[],found:[[],[],[],[]],tab:[[],[],[],[],[],[],[]]};
+  let k=0;
+  for(let c=0;c<7;c++)for(let r=0;r<=c;r++)S.tab[c].push({id:deck[k++],up:r===c});
+  while(k<52)S.stock.push({id:deck[k++],up:false});
+  inGame=true;undoStack=[];moves=0;elapsed=0;won=false;started=false;autoRunning=false;
+  clearInterval(tick);tick=null;
+  stats['d'+drawN].played++;saveStats();
+  $('menu').classList.add('hidden');$('endScr').classList.add('hidden');
+  updateHud();layout();
+}
+function startClock(){if(started)return;started=true;startT=performance.now()-elapsed*1000;tick=setInterval(()=>{elapsed=(performance.now()-startT)/1000;$('time').textContent=fmt(elapsed);},500);}
+function snapshot(){undoStack.push(JSON.stringify({S,moves}));if(undoStack.length>300)undoStack.shift();}
+function undo(){
+  if(!undoStack.length||won||autoRunning)return;
+  const o=JSON.parse(undoStack.pop());S=o.S;moves=o.moves+1;
+  sFlip();updateHud();layout();
+}
+
+/* ---------- rules ---------- */
+function topOf(a){return a.length?a[a.length-1]:null;}
+function canFound(id,fi){
+  const f=S.found[fi];
+  if(!f.length)return rankOf(id)===0;
+  const t=topOf(f).id;return suitOf(t)===suitOf(id)&&rankOf(id)===rankOf(t)+1;
+}
+function canTab(id,ti){
+  const t=S.tab[ti];
+  if(!t.length)return rankOf(id)===12;
+  const top=topOf(t);if(!top.up)return false;
+  return isRed(top.id)!==isRed(id)&&rankOf(id)===rankOf(top.id)-1;
+}
+function srcCards(src){
+  if(src.t==='waste')return S.waste.length?[topOf(S.waste)]:[];
+  if(src.t==='found')return S.found[src.i].length?[topOf(S.found[src.i])]:[];
+  if(src.t==='tab')return S.tab[src.i].slice(src.idx);
+  return [];
+}
+function legalDest(src,dst){
+  const cards=srcCards(src);if(!cards.length)return false;
+  if(dst.t==='found'){if(cards.length!==1)return false;if(src.t==='found'&&src.i===dst.i)return false;return canFound(cards[0].id,dst.i);}
+  if(dst.t==='tab'){if(src.t==='tab'&&src.i===dst.i)return false;return canTab(cards[0].id,dst.i);}
+  return false;
+}
+function removeFrom(src,n){
+  if(src.t==='waste')return S.waste.splice(S.waste.length-n,n);
+  if(src.t==='found')return S.found[src.i].splice(S.found[src.i].length-n,n);
+  return S.tab[src.i].splice(src.idx);
+}
+function doMove(src,dst){
+  if(!legalDest(src,dst))return false;
+  snapshot();
+  const cards=removeFrom(src,srcCards(src).length);
+  const dest=dst.t==='found'?S.found[dst.i]:S.tab[dst.i];
+  cards.forEach(c=>{c.up=true;dest.push(c);});
+  if(src.t==='tab'){const t=topOf(S.tab[src.i]);if(t&&!t.up){t.up=true;sFlip();}}
+  moves++;startClock();
+  dst.t==='found'?sFound():sPlace();
+  updateHud();layout();checkWin();
+  return true;
+}
+function drawStock(){
+  if(autoRunning||won)return;
+  if(!S.stock.length&&!S.waste.length)return;
+  snapshot();
+  if(S.stock.length){
+    const n=Math.min(drawN,S.stock.length);
+    for(let i=0;i<n;i++){const c=S.stock.pop();c.up=true;S.waste.push(c);}
+  }else{
+    while(S.waste.length){const c=S.waste.pop();c.up=false;S.stock.push(c);}
+  }
+  moves++;startClock();sFlip();updateHud();layout();
+}
+function autoTarget(src){
+  const cards=srcCards(src);if(!cards.length)return null;
+  if(cards.length===1)for(let i=0;i<4;i++){const d={t:'found',i};if(legalDest(src,d))return d;}
+  // tableau: prefer non-empty columns, then empty
+  for(const empty of[false,true])for(let k=1;k<=7;k++){
+    const i=src.t==='tab'?(src.i+k)%7:k-1;
+    if((S.tab[i].length===0)!==empty)continue;
+    const d={t:'tab',i};
+    if(legalDest(src,d)){
+      // don't move a K that's already at the bottom of a column to another empty column
+      if(empty&&src.t==='tab'&&src.idx===0)continue;
+      return d;
+    }
+  }
+  return null;
+}
+function checkWin(){
+  if(S.found.every(f=>f.length===13)){
+    won=true;clearInterval(tick);
+    const k='d'+drawN,s=stats[k];s.won++;
+    const t=Math.max(1,Math.round(elapsed));
+    if(!s.bestTime||t<s.bestTime)s.bestTime=t;
+    if(!s.bestMoves||moves<s.bestMoves)s.bestMoves=moves;
+    saveStats();
+    [523,659,784,1047,1319].forEach((f,i)=>beep(f,.25,'triangle',.08,i*.11));
+    $('endSub').textContent=`Thời gian ${fmt(t)} · ${moves} nước đi · Chế độ ${drawN===1?'Rút 1':'Rút 3'}`;
+    $('endStats').innerHTML=statsText();
+    celebrate();
+    setTimeout(()=>$('endScr').classList.remove('hidden'),1600);
+  }
+}
+function celebrate(){
+  // bounce foundation cards
+  let k=0;for(let i=0;i<4;i++)S.found[i].slice(-4).forEach(c=>{const el=els[c.id];setTimeout(()=>{el.style.transition='top .3s ease';el.style.top=(parseFloat(el.style.top)-14)+'px';setTimeout(()=>{el.style.top=(parseFloat(el.style.top)+14)+'px';},300);},k++*60);});
+}
+function canAuto(){return !won&&!S.stock.length&&!S.waste.length&&S.tab.every(t=>t.every(c=>c.up))&&S.found.some(f=>f.length<13);}
+function runAuto(){
+  if(autoRunning)return;autoRunning=true;$('auto').classList.add('hidden');
+  const step=()=>{
+    if(won){autoRunning=false;return;}
+    let best=null;
+    for(let i=0;i<7;i++){const t=topOf(S.tab[i]);if(!t)continue;for(let f=0;f<4;f++)if(canFound(t.id,f)){if(!best||rankOf(t.id)<rankOf(best.c))best={src:{t:'tab',i,idx:S.tab[i].length-1},dst:{t:'found',i:f},c:t.id};break;}}
+    if(!best){autoRunning=false;updateHud();layout();return;}
+    doMove(best.src,best.dst);
+    if(won)autoRunning=false;else setTimeout(step,90);
+  };
+  step();
+}
+function updateHud(){
+  $('moves').textContent=moves;$('time').textContent=fmt(elapsed);
+  $('bUndo').disabled=!undoStack.length||won;
+  $('auto').classList.toggle('hidden',!canAuto()||autoRunning);
+}
+
+/* ---------- layout ---------- */
+function computeSizes(){
+  W=Math.min(window.innerWidth-12,760);
+  gap=Math.max(3,Math.round(W*0.014));
+  cw=Math.floor((W-gap*6)/7);
+  const maxByH=Math.floor((window.innerHeight-90)/4.6/1.4*1.0);
+  if(cw>maxByH)cw=Math.max(40,maxByH);
+  ch=Math.round(cw*1.4);
+  W=cw*7+gap*6;
+  tabY=ch+gap*2+4;
+  document.documentElement.style.setProperty('--cw',cw+'px');
+  board.style.width=W+'px';
+}
+const colX=i=>i*(cw+gap);
+function place(el,x,y,z,up){el.style.left=x+'px';el.style.top=y+'px';el.style.zIndex=z;el.classList.toggle('down',!up);}
+function layout(){
+  if(!S)return;
+  slots.stock.style.left=colX(0)+'px';slots.stock.style.top='0px';
+  slots.stock.innerHTML=S.waste.length||S.stock.length?'↻':'∅';
+  slots.waste.style.left=colX(1)+'px';slots.waste.style.top='0px';
+  for(let i=0;i<4;i++){slots['f'+i].style.left=colX(3+i)+'px';slots['f'+i].style.top='0px';}
+  for(let i=0;i<7;i++){slots['t'+i].style.left=colX(i)+'px';slots['t'+i].style.top=tabY+'px';}
+  S.stock.forEach((c,k)=>place(els[c.id],colX(0)+Math.min(k,6)*0.0,0,10+k,false));
+  const wn=S.waste.length,fanFrom=drawN===3?Math.max(0,wn-3):wn-1,fanStep=Math.min(cw*0.28,(gap+cw)*0.45);
+  S.waste.forEach((c,k)=>{const off=k>=fanFrom&&drawN===3?(k-fanFrom)*fanStep:0;place(els[c.id],colX(1)+off,0,100+k,true);});
+  S.found.forEach((f,i)=>f.forEach((c,k)=>place(els[c.id],colX(3+i),0,200+k,true)));
+  const boardTop=board.getBoundingClientRect().top+window.scrollY;
+  const availH=Math.max(ch*2.5,window.innerHeight-boardTop-tabY-14);
+  let maxBottom=tabY+ch;
+  S.tab.forEach((t,i)=>{
+    let fd=ch*0.13,fu=ch*0.27;
+    let need=0;for(let k=0;k<t.length-1;k++)need+=t[k].up?fu:fd;
+    if(need+ch>availH&&need>0){const f=(availH-ch)/need;fd*=f;fu*=f;fd=Math.max(fd,ch*0.05);fu=Math.max(fu,ch*0.12);}
+    let y=tabY;
+    t.forEach((c,k)=>{place(els[c.id],colX(i),y,300+k,c.up);if(k<t.length-1)y+=c.up?fu:fd;});
+    maxBottom=Math.max(maxBottom,y+ch);
+  });
+  board.style.height=(maxBottom+6)+'px';
+}
+
+/* ---------- input: drag & tap ---------- */
+let drag=null;
+function locate(id){
+  if(S.waste.length&&topOf(S.waste).id===id)return{t:'waste'};
+  for(let i=0;i<4;i++)if(S.found[i].length&&topOf(S.found[i]).id===id)return{t:'found',i};
+  for(let i=0;i<7;i++){const k=S.tab[i].findIndex(c=>c.id===id);if(k>=0)return S.tab[i][k].up?{t:'tab',i,idx:k}:{t:'tabdown',i,idx:k};}
+  if(S.stock.some(c=>c.id===id))return{t:'stock'};
+  return null;
+}
+board.addEventListener('pointerdown',e=>{
+  if(!S||won||autoRunning||drag)return;
+  const cEl=e.target.closest('.c');
+  if(!cEl){if(e.target===slots.stock)drawStock();return;}
+  const id=+cEl.dataset.id;const loc=locate(id);
+  if(!loc)return;
+  if(loc.t==='stock'){drawStock();return;}
+  if(loc.t==='tabdown')return;
+  const cards=srcCards(loc);
+  const rect=board.getBoundingClientRect();
+  drag={src:loc,ids:cards.map(c=>c.id),sx:e.clientX,sy:e.clientY,moved:false,pid:e.pointerId,
+    orig:cards.map(c=>({x:parseFloat(els[c.id].style.left),y:parseFloat(els[c.id].style.top)})),rect};
+  try{board.setPointerCapture(e.pointerId);}catch(err){}
+  e.preventDefault();
+});
+board.addEventListener('pointermove',e=>{
+  if(!drag||e.pointerId!==drag.pid)return;
+  const dx=e.clientX-drag.sx,dy=e.clientY-drag.sy;
+  if(!drag.moved&&Math.hypot(dx,dy)<6)return;
+  if(!drag.moved){drag.moved=true;drag.ids.forEach((id,k)=>{els[id].classList.add('drag');els[id].style.zIndex=1000+k;});}
+  drag.ids.forEach((id,k)=>{els[id].style.left=(drag.orig[k].x+dx)+'px';els[id].style.top=(drag.orig[k].y+dy)+'px';});
+});
+function endDrag(e){
+  if(!drag||e.pointerId!==drag.pid)return;
+  const d=drag;drag=null;
+  d.ids.forEach(id=>els[id].classList.remove('drag'));
+  if(!d.moved){
+    const t=autoTarget(d.src);
+    if(t)doMove(d.src,t);else{sBad();shake(d.ids);}
+    return;
+  }
+  // find best drop target by overlap with first dragged card
+  const el=els[d.ids[0]];const x=parseFloat(el.style.left),y=parseFloat(el.style.top);
+  let best=null,bestA=0;
+  const cand=[];
+  for(let i=0;i<4;i++)cand.push({dst:{t:'found',i},x:colX(3+i),y:0,h:ch});
+  for(let i=0;i<7;i++){const t=S.tab[i];let ty=tabY;if(t.length)ty=parseFloat(els[topOf(t).id].style.top);if(d.src.t==='tab'&&d.src.i===i)continue;cand.push({dst:{t:'tab',i},x:colX(i),y:ty,h:ch});}
+  for(const c of cand){
+    const ox=Math.max(0,Math.min(x+cw,c.x+cw)-Math.max(x,c.x)),oy=Math.max(0,Math.min(y+ch,c.y+c.h)-Math.max(y,c.y));
+    const a=ox*oy;if(a>bestA&&legalDest(d.src,c.dst)){bestA=a;best=c.dst;}
+  }
+  if(best&&doMove(d.src,best))return;
+  layout();
+}
+board.addEventListener('pointerup',endDrag);
+board.addEventListener('pointercancel',e=>{if(drag&&e.pointerId===drag.pid){drag.ids.forEach(id=>els[id].classList.remove('drag'));drag=null;layout();}});
+function shake(ids){ids.forEach(id=>{const el=els[id];const x=parseFloat(el.style.left);el.style.left=(x+5)+'px';setTimeout(()=>{el.style.left=(x-4)+'px';},90);setTimeout(()=>{el.style.left=x+'px';},180);});}
+
+/* ---------- buttons ---------- */
+const segD=$('segDraw');
+segD.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;segD.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));drawN=+b.dataset.v;});
+$('bStart').onclick=newGame;$('bAgain').onclick=newGame;
+let inGame=false;
+function openMenu(){$('menuStats').innerHTML=statsText();$('bResume').classList.toggle('hidden',!inGame||won);$('menu').classList.remove('hidden');}
+$('bNew').onclick=openMenu;$('bMenu').onclick=openMenu;
+$('bResume').onclick=()=>$('menu').classList.add('hidden');
+$('bEndMenu').onclick=()=>{$('endScr').classList.add('hidden');$('menuStats').innerHTML=statsText();$('menu').classList.remove('hidden');};
+$('bUndo').onclick=undo;
+$('auto').onclick=runAuto;
+$('bSound').onclick=()=>{sound=!sound;$('bSound').textContent=sound?'🔊':'🔇';};
+window.addEventListener('resize',()=>{computeSizes();layout();});
+buildDOM();computeSizes();
+$('menuStats').innerHTML=statsText();
+// preview deal behind the menu
+(function(){const deck=[...Array(52).keys()];S={stock:[],waste:[],found:[[],[],[],[]],tab:[[],[],[],[],[],[],[]]};let k=0;for(let c=0;c<7;c++)for(let r=0;r<=c;r++)S.tab[c].push({id:deck[k++],up:r===c});while(k<52)S.stock.push({id:deck[k++],up:false});layout();updateHud();})();
+window.__sol={get S(){return S;},get moves(){return moves;},get won(){return won;},doMove,drawStock,autoTarget,legalDest,canAuto,runAuto,undo,setState:(s)=>{S=s;layout();updateHud();}};
+})();
+</script>
+</body>
+</html>

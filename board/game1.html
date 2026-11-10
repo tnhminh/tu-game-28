@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Cờ Caro</title>
+<style>
+:root{--x:#e0443c;--o:#2b74d8;--acc:#f3b545;--panel:rgba(255,255,255,.07);--line:rgba(255,255,255,.14)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;overflow-x:hidden}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:#eef2f7;background:#14202c radial-gradient(ellipse at 30% -10%,#2f4e6c 0%,#14202c 60%,#0b131b 100%) fixed;min-height:100vh}
+.back{position:fixed;top:8px;left:8px;z-index:60;font-size:13px;color:#fff;background:rgba(0,0,0,.4);padding:5px 11px;border-radius:14px;text-decoration:none;border:1px solid var(--line)}
+.back:hover{background:rgba(0,0,0,.6)}
+#app{max-width:720px;margin:0 auto;padding:44px 8px 16px;display:flex;flex-direction:column;align-items:center;gap:8px}
+h1{margin:0;font-size:22px;letter-spacing:.5px}
+h1 span{color:var(--acc)}
+.bar{display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px;flex-wrap:wrap}
+.status{flex:1;min-width:0;display:flex;align-items:center;gap:8px;font-size:15px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:7px 10px}
+.dot{width:14px;height:14px;border-radius:50%;flex:none;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:12px}
+#boardWrap{position:relative;width:100%;display:flex;justify-content:center}
+canvas{display:block;touch-action:manipulation;border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,.45);cursor:pointer}
+.btns{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+button{font:inherit;font-size:14px;color:#fff;background:#2b3e52;border:1px solid var(--line);border-radius:9px;padding:8px 13px;cursor:pointer;transition:background .15s,transform .1s}
+button:hover{background:#36506a}
+button:active{transform:scale(.96)}
+button.primary{background:linear-gradient(#f6c25b,#e09a24);color:#2a1a00;border-color:#f8d07e;font-weight:700}
+button.primary:hover{background:linear-gradient(#ffd47a,#eaa93a)}
+button:disabled{opacity:.45;cursor:default}
+.stats{font-size:13px;opacity:.85;text-align:center}
+.overlay{position:fixed;inset:0;background:rgba(5,10,16,.72);display:flex;align-items:center;justify-content:center;z-index:50;padding:48px 16px 16px;backdrop-filter:blur(3px)}
+.hidden{display:none!important}
+.card{background:linear-gradient(#1f3245,#172636);border:1px solid var(--line);border-radius:16px;padding:20px 18px;max-width:430px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.5);max-height:calc(100vh - 64px);overflow:auto}
+.card h2{margin:0 0 6px;font-size:26px;text-align:center}
+.card h2 .x{color:var(--x)} .card h2 .o{color:var(--o)}
+.sub{text-align:center;opacity:.8;margin:0 0 14px;font-size:14px}
+.opt{margin:10px 0}
+.opt label{display:block;font-size:13px;opacity:.8;margin-bottom:5px}
+.seg{display:flex;gap:4px;background:rgba(0,0,0,.25);border-radius:10px;padding:3px}
+.seg button{flex:1;background:transparent;border:none;padding:8px 4px;font-size:14px}
+.seg button.on{background:#3d5875;box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
+.rules{font-size:13px;line-height:1.5;background:rgba(0,0,0,.2);border-radius:10px;padding:10px 12px;margin:12px 0}
+.rules ul{margin:4px 0 0;padding-left:18px}
+.big{width:100%;padding:12px;font-size:16px;margin-top:6px}
+.res{font-size:44px;text-align:center;margin:4px 0}
+</style>
+</head>
+<body>
+<a class="back" href="../index.html">← Danh sách game</a>
+<div id="app">
+  <h1>Cờ <span>Caro</span></h1>
+  <div class="bar">
+    <div class="status" id="status"><span class="dot" id="turnDot"></span><span id="statusText">Chọn chế độ để bắt đầu</span></div>
+  </div>
+  <div id="boardWrap"><canvas id="cv" aria-label="Bàn cờ caro"></canvas></div>
+  <div class="btns">
+    <button id="bUndo">↶ Đi lại</button>
+    <button id="bNew">Ván mới</button>
+    <button id="bMenu">Menu</button>
+    <button id="bSound">🔊</button>
+  </div>
+  <div class="stats" id="stats"></div>
+</div>
+
+<div class="overlay" id="menu">
+  <div class="card">
+    <h2>Cờ <span class="x">Ca</span><span class="o">ro</span></h2>
+    <p class="sub">Năm quân liên tiếp là thắng!</p>
+    <div class="opt"><label>Chế độ chơi</label>
+      <div class="seg" id="segMode"><button data-v="ai" class="on">Chơi với máy</button><button data-v="pvp">2 người</button></div></div>
+    <div class="opt" id="optDiff"><label>Độ khó</label>
+      <div class="seg" id="segDiff"><button data-v="0">Dễ</button><button data-v="1" class="on">Vừa</button><button data-v="2">Khó</button></div></div>
+    <div class="opt" id="optFirst"><label>Đi trước</label>
+      <div class="seg" id="segFirst"><button data-v="me" class="on">Bạn (X)</button><button data-v="ai">Máy (X)</button></div></div>
+    <div class="rules"><b>Luật chơi</b>
+      <ul>
+        <li>Bàn cờ 15×15, hai bên lần lượt đánh <b style="color:var(--x)">X</b> và <b style="color:var(--o)">O</b> vào ô trống. X luôn đi trước.</li>
+        <li>Ai tạo được <b>5 quân liên tiếp</b> (ngang, dọc hoặc chéo) trước sẽ thắng.</li>
+        <li>Bàn đầy mà chưa ai thắng thì hòa.</li>
+        <li>Chạm/nhấp vào ô để đánh. Nút "Đi lại" để hoàn tác nước vừa đi.</li>
+      </ul></div>
+    <button class="primary big" id="bStart">Bắt đầu</button>
+    <button class="big hidden" id="bResume">Tiếp tục ván đang chơi</button>
+    <div class="stats" id="menuStats" style="margin-top:10px"></div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="endScr">
+  <div class="card" style="text-align:center">
+    <div class="res" id="endIcon">🏆</div>
+    <h2 id="endTitle">Bạn thắng!</h2>
+    <p class="sub" id="endSub"></p>
+    <button class="primary big" id="bAgain">Chơi lại</button>
+    <button class="big" id="bView">Xem bàn cờ</button>
+    <button class="big" id="bEndMenu">Menu</button>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+const N=15, EMPTY=0, X=1, O=2;
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+const $=id=>document.getElementById(id);
+let board=new Int8Array(N*N), history=[], turn=X, over=false, winLine=null;
+let mode='ai', diff=1, humanSide=X, aiThinking=false, sound=true, gameActive=false;
+let cell=30, boardPx=450, hover=-1;
+
+/* ---------- storage ---------- */
+const SKEY='caro_stats_v1';
+let stats={ai:[{w:0,l:0,d:0},{w:0,l:0,d:0},{w:0,l:0,d:0}],pvp:{x:0,o:0,d:0}};
+try{const s=JSON.parse(localStorage.getItem(SKEY));if(s&&s.ai&&s.pvp)stats=s;}catch(e){}
+function saveStats(){try{localStorage.setItem(SKEY,JSON.stringify(stats));}catch(e){}}
+const DN=['Dễ','Vừa','Khó'];
+function statsText(){
+  if(mode==='ai'){const s=stats.ai[diff];return `Máy (${DN[diff]}): Thắng ${s.w} · Thua ${s.l} · Hòa ${s.d}`;}
+  return `2 người: X thắng ${stats.pvp.x} · O thắng ${stats.pvp.o} · Hòa ${stats.pvp.d}`;
+}
+function renderStats(){
+  $('stats').textContent=statsText();
+  const a=stats.ai;
+  $('menuStats').innerHTML=`Thành tích với máy — Dễ: ${a[0].w}/${a[0].w+a[0].l+a[0].d} · Vừa: ${a[1].w}/${a[1].w+a[1].l+a[1].d} · Khó: ${a[2].w}/${a[2].w+a[2].l+a[2].d} ván thắng`;
+}
+
+/* ---------- sound ---------- */
+let actx=null;
+function beep(f,d,type,vol){
+  if(!sound)return;
+  try{
+    if(!actx)actx=new (window.AudioContext||window.webkitAudioContext)();
+    const o=actx.createOscillator(),g=actx.createGain();
+    o.type=type||'sine';o.frequency.value=f;
+    g.gain.setValueAtTime(vol||0.12,actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001,actx.currentTime+d);
+    o.connect(g);g.connect(actx.destination);o.start();o.stop(actx.currentTime+d);
+  }catch(e){}
+}
+function winSound(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,.25,'triangle',.12),i*120));}
+function loseSound(){[392,330,262].forEach((f,i)=>setTimeout(()=>beep(f,.3,'sawtooth',.06),i*160));}
+
+/* ---------- layout & drawing ---------- */
+function resize(){
+  const w=Math.min(window.innerWidth-16,680);
+  const h=window.innerHeight-200;
+  boardPx=Math.max(240,Math.floor(Math.min(w,Math.max(h,300))));
+  cell=boardPx/N;
+  const dpr=window.devicePixelRatio||1;
+  cv.style.width=boardPx+'px';cv.style.height=boardPx+'px';
+  cv.width=Math.round(boardPx*dpr);cv.height=Math.round(boardPx*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  draw();
+}
+function draw(){
+  const W=boardPx;
+  const g=ctx.createLinearGradient(0,0,W,W);
+  g.addColorStop(0,'#f6ecd4');g.addColorStop(1,'#e8d7b0');
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,W);
+  ctx.strokeStyle='rgba(90,70,40,.35)';ctx.lineWidth=1;
+  ctx.beginPath();
+  for(let i=0;i<=N;i++){const p=Math.round(i*cell)+.5;ctx.moveTo(p,0);ctx.lineTo(p,W);ctx.moveTo(0,p);ctx.lineTo(W,p);}
+  ctx.stroke();
+  // star points
+  ctx.fillStyle='rgba(90,70,40,.35)';
+  [[3,3],[11,3],[3,11],[11,11],[7,7]].forEach(([x,y])=>{ctx.beginPath();ctx.arc((x+.5)*cell,(y+.5)*cell,Math.max(1.5,cell*.07),0,7);ctx.fill();});
+  // hover
+  if(hover>=0&&board[hover]===EMPTY&&!over&&isHumanTurn()){
+    const hx=hover%N,hy=(hover/N|0);
+    ctx.globalAlpha=.3;drawMark(hx,hy,turn);ctx.globalAlpha=1;
+  }
+  // last move
+  const last=history.length?history[history.length-1]:-1;
+  if(last>=0){
+    const lx=last%N,ly=(last/N|0);
+    ctx.fillStyle='rgba(243,181,69,.45)';
+    ctx.fillRect(lx*cell+1,ly*cell+1,cell-1,cell-1);
+  }
+  if(winLine){
+    winLine.forEach(i=>{ctx.fillStyle='rgba(80,200,120,.45)';ctx.fillRect((i%N)*cell+1,(i/N|0)*cell+1,cell-1,cell-1);});
+  }
+  for(let i=0;i<N*N;i++)if(board[i])drawMark(i%N,i/N|0,board[i]);
+  if(winLine){
+    const a=winLine[0],b=winLine[winLine.length-1];
+    ctx.strokeStyle='rgba(20,120,60,.85)';ctx.lineWidth=Math.max(3,cell*.14);ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo((a%N+.5)*cell,((a/N|0)+.5)*cell);ctx.lineTo((b%N+.5)*cell,((b/N|0)+.5)*cell);ctx.stroke();
+  }
+}
+function drawMark(x,y,p){
+  const cx=(x+.5)*cell,cy=(y+.5)*cell,r=cell*.32;
+  ctx.lineCap='round';ctx.lineWidth=Math.max(2,cell*.12);
+  if(p===X){
+    ctx.strokeStyle='#d43a32';
+    ctx.beginPath();ctx.moveTo(cx-r,cy-r);ctx.lineTo(cx+r,cy+r);ctx.moveTo(cx+r,cy-r);ctx.lineTo(cx-r,cy+r);ctx.stroke();
+  }else{
+    ctx.strokeStyle='#2468c9';
+    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.stroke();
+  }
+}
+
+/* ---------- rules ---------- */
+const DIRS=[[1,0],[0,1],[1,1],[1,-1]];
+function checkWin(b,idx){
+  const p=b[idx],x=idx%N,y=idx/N|0;
+  for(const[dx,dy]of DIRS){
+    const line=[idx];
+    for(let s=1;s<5;s++){const xx=x+dx*s,yy=y+dy*s;if(xx<0||yy<0||xx>=N||yy>=N||b[yy*N+xx]!==p)break;line.push(yy*N+xx);}
+    for(let s=1;s<5;s++){const xx=x-dx*s,yy=y-dy*s;if(xx<0||yy<0||xx>=N||yy>=N||b[yy*N+xx]!==p)break;line.unshift(yy*N+xx);}
+    if(line.length>=5)return line;
+  }
+  return null;
+}
+
+/* ---------- AI ---------- */
+const PATS=[
+ ['XXXXX',1000000],
+ ['.XXXX.',50000],
+ ['XXXX.',4000],['.XXXX',4000],['XXX.X',4000],['X.XXX',4000],['XX.XX',4000],
+ ['..XXX.',3000],['.XXX..',3000],['.XX.X.',2600],['.X.XX.',2600],
+ ['XXX..',350],['..XXX',350],['XX.X.',300],['.X.XX',300],['X.XX.',300],['.XX.X',300],['XX..X',250],['X..XX',250],['X.X.X',250],
+ ['..XX..',220],['.XX...',160],['...XX.',160],['.X.X..',130],['..X.X.',130],['.X..X.',90],
+ ['XX...',25],['...XX',25],['X.X..',20],['..X.X',20]
+];
+function lineAt(b,x,y,dx,dy,p){
+  let s='';
+  for(let k=-5;k<=5;k++){
+    const xx=x+k*dx,yy=y+k*dy;
+    if(k===0){s+='X';continue;}
+    if(xx<0||yy<0||xx>=N||yy>=N){s+='O';continue;}
+    const v=b[yy*N+xx];s+=v===EMPTY?'.':(v===p?'X':'O');
+  }
+  return s; // center index 5
+}
+function lineScore(s){
+  let best=8;
+  for(let i=0;i<PATS.length;i++){
+    const pt=PATS[i][0];let from=0,j;
+    while((j=s.indexOf(pt,from))!==-1){
+      if(j<=5&&j+pt.length>5)return PATS[i][1];
+      from=j+1;
+    }
+  }
+  return best;
+}
+function cellScore(b,idx,p){
+  const x=idx%N,y=idx/N|0;let sum=0,fours=0,threes=0;
+  for(const[dx,dy]of DIRS){
+    const sc=lineScore(lineAt(b,x,y,dx,dy,p));
+    sum+=sc;
+    if(sc>=1000000)return 1000000;
+    if(sc>=4000)fours++;else if(sc>=2600)threes++;
+  }
+  if(fours>=2||(fours&&threes))sum+=40000;
+  else if(threes>=2)sum+=12000;
+  return sum;
+}
+function candidates(b){
+  const res=[];let any=false;
+  for(let i=0;i<N*N;i++){
+    if(b[i]){any=true;continue;}
+    const x=i%N,y=i/N|0;let near=false;
+    for(let dy=-2;dy<=2&&!near;dy++)for(let dx=-2;dx<=2;dx++){
+      const xx=x+dx,yy=y+dy;if(xx<0||yy<0||xx>=N||yy>=N)continue;
+      if(b[yy*N+xx]){near=true;break;}
+    }
+    if(near)res.push(i);
+  }
+  if(!any)res.push(7*N+7);
+  return res;
+}
+function findFive(b,p,cands){
+  for(const i of cands){if(b[i])continue;b[i]=p;const w=checkWin(b,i);b[i]=0;if(w)return i;}
+  return -1;
+}
+function makesFourCells(b,p,cands){
+  // cells where placing p creates a threat of five next move
+  const res=[];
+  for(const i of cands){
+    if(b[i])continue;
+    const x=i%N,y=i/N|0;let ok=false;
+    for(const[dx,dy]of DIRS){if(lineScore(lineAt(b,x,y,dx,dy,p))>=4000){ok=true;break;}}
+    if(ok)res.push(i);
+  }
+  return res;
+}
+let vcfNodes=0;
+function vcf(b,p,depth){
+  // victory by continuous fours for p (p to move)
+  if(++vcfNodes>4000)return -1;
+  const opp=3-p;const cands=candidates(b);
+  const win=findFive(b,p,cands);if(win>=0)return win;
+  if(depth<=0)return -1;
+  if(findFive(b,opp,cands)>=0)return -1; // opponent threatens five, we can't attack freely
+  for(const i of makesFourCells(b,p,cands)){
+    b[i]=p;
+    const c2=candidates(b);
+    // opponent must block: find our five cells
+    const fiveCells=[];
+    for(const j of c2){if(b[j])continue;b[j]=p;if(checkWin(b,j))fiveCells.push(j);b[j]=0;}
+    let res=-1;
+    if(fiveCells.length>=2){res=i;}
+    else if(fiveCells.length===1){
+      const blk=fiveCells[0];
+      b[blk]=opp;
+      const ow=checkWin(b,blk);
+      if(!ow){
+        if(vcf(b,p,depth-1)>=0)res=i;
+      }
+      b[blk]=0;
+    }
+    b[i]=0;
+    if(res>=0)return res;
+  }
+  return -1;
+}
+function aiMove(){
+  const me=turn,opp=3-me;const b=board;
+  const cands=candidates(b);
+  if(cands.length===1&&history.length===0)return cands[0];
+  // 1. win now
+  let m=findFive(b,me,cands);
+  if(m>=0&&(diff>0||Math.random()<.85))return m;
+  // 2. block five
+  m=findFive(b,opp,cands);
+  if(m>=0&&(diff>0||Math.random()<.8))return m;
+  // 3. VCF (hard / sometimes medium)
+  if(diff===2||(diff===1&&Math.random()<.5)){
+    vcfNodes=0;const v=vcf(b,me,diff===2?10:5);if(v>=0)return v;
+  }
+  // 4. heuristic
+  const scored=[];
+  for(const i of cands){
+    const a=cellScore(b,i,me),d=cellScore(b,i,opp);
+    let s=a*1.1+d*(diff===0?0.6:0.95);
+    const x=i%N,y=i/N|0;s+=(7-Math.max(Math.abs(x-7),Math.abs(y-7)))*0.5;
+    scored.push([i,s,a,d]);
+  }
+  scored.sort((p,q)=>q[1]-p[1]);
+  if(diff===0){
+    const k=Math.min(scored.length,4);
+    // weighted random among top few
+    const r=Math.random();const pick=r<.45?0:r<.7?1:r<.88?2:3;
+    return scored[Math.min(pick,k-1)][0];
+  }
+  if(diff===2){
+    // look ahead: avoid moves that let opponent start a winning VCF; prefer moves after which opp has none
+    const top=scored.slice(0,8);
+    let bestI=top[0][0],bestV=-Infinity;
+    for(const [i,s] of top){
+      b[i]=me;
+      vcfNodes=0;const danger=vcf(b,opp,8)>=0;
+      // opponent best reply score
+      let oppBest=0;const c2=candidates(b);
+      for(const j of c2){const v=cellScore(b,j,opp)+cellScore(b,j,me)*0.5;if(v>oppBest)oppBest=v;}
+      b[i]=0;
+      const v=s-(danger?5e6:0)-oppBest*0.35;
+      if(v>bestV){bestV=v;bestI=i;}
+    }
+    return bestI;
+  }
+  // medium: slight randomness among near-equal tops
+  const tops=scored.filter(t=>t[1]>=scored[0][1]*0.97);
+  return tops[Math.floor(Math.random()*tops.length)][0];
+}
+
+/* ---------- game flow ---------- */
+function isHumanTurn(){return !over&&gameActive&&(mode==='pvp'||turn===humanSide)&&!aiThinking;}
+function updateStatus(){
+  const dot=$('turnDot');
+  dot.style.background=turn===X?'var(--x)':'var(--o)';
+  dot.textContent='';
+  let t;
+  if(over){
+    t=winLine?((board[winLine[0]]===X?'X':'O')+' thắng!'):'Hòa!';
+    dot.style.background=winLine?(board[winLine[0]]===X?'var(--x)':'var(--o)'):'#888';
+  }else if(mode==='ai')t=turn===humanSide?'Lượt của bạn ('+(turn===X?'X':'O')+')':'Máy đang suy nghĩ…';
+  else t='Lượt của '+(turn===X?'X':'O');
+  $('statusText').textContent=t;
+  $('bUndo').disabled=!history.length||aiThinking||(mode==='ai'&&!history.some((_,k)=>(k%2===0?X:O)===humanSide));
+  renderStats();
+}
+function place(i){
+  board[i]=turn;history.push(i);
+  beep(turn===X?660:520,.08,'triangle',.1);
+  const w=checkWin(board,i);
+  if(w){winLine=w;endGame(turn);return;}
+  if(history.length===N*N){endGame(0);return;}
+  turn=3-turn;updateStatus();draw();
+  if(mode==='ai'&&turn!==humanSide)scheduleAI();
+}
+function scheduleAI(){
+  aiThinking=true;updateStatus();
+  setTimeout(()=>{
+    if(!gameActive||over){aiThinking=false;return;}
+    const m=aiMove();
+    aiThinking=false;
+    if(m>=0&&board[m]===EMPTY)place(m);
+  },diff===2?250:380);
+}
+function endGame(winner){
+  over=true;updateStatus();draw();
+  let icon,title,sub;
+  if(mode==='ai'){
+    const s=stats.ai[diff];
+    if(winner===0){s.d++;icon='🤝';title='Hòa cờ!';sub='Bàn cờ đã kín.';}
+    else if(winner===humanSide){s.w++;icon='🏆';title='Bạn thắng!';sub='Bạn đã đánh bại máy ở mức '+DN[diff]+'.';winSound();}
+    else{s.l++;icon='🤖';title='Máy thắng!';sub='Thử lại nhé, bạn sẽ làm được!';loseSound();}
+  }else{
+    if(winner===0){stats.pvp.d++;icon='🤝';title='Hòa cờ!';sub='';}
+    else{winner===X?stats.pvp.x++:stats.pvp.o++;icon='🏆';title=(winner===X?'X':'O')+' thắng!';sub='Chúc mừng người chơi '+(winner===X?'X':'O')+'.';winSound();}
+  }
+  sub+=' Tổng số nước: '+history.length+'.';
+  saveStats();renderStats();
+  $('endIcon').textContent=icon;$('endTitle').textContent=title;$('endSub').textContent=sub;
+  setTimeout(()=>$('endScr').classList.remove('hidden'),700);
+}
+function newGame(){
+  board=new Int8Array(N*N);history=[];turn=X;over=false;winLine=null;aiThinking=false;gameActive=true;
+  $('endScr').classList.add('hidden');$('menu').classList.add('hidden');
+  updateStatus();draw();
+  if(mode==='ai'&&humanSide!==X)scheduleAI();
+}
+function undo(){
+  if(aiThinking||!history.length)return;
+  if(over){over=false;winLine=null;}
+  const pop=()=>{const i=history.pop();board[i]=EMPTY;turn=board[i]===EMPTY?(history.length%2===0?X:O):turn;};
+  if(mode==='pvp'){pop();}
+  else{
+    pop();
+    while(history.length&&turn!==humanSide)pop();
+    if(turn!==humanSide){ // AI moved first and only its move remains
+      updateStatus();draw();scheduleAI();return;
+    }
+  }
+  beep(300,.06);
+  updateStatus();draw();
+}
+
+/* ---------- input ---------- */
+function idxFromEvent(e){
+  const r=cv.getBoundingClientRect();
+  const x=Math.floor((e.clientX-r.left)/r.width*N),y=Math.floor((e.clientY-r.top)/r.height*N);
+  if(x<0||y<0||x>=N||y>=N)return -1;return y*N+x;
+}
+cv.addEventListener('pointerup',e=>{
+  if(!isHumanTurn())return;
+  const i=idxFromEvent(e);
+  if(i>=0&&board[i]===EMPTY){hover=-1;place(i);}
+});
+cv.addEventListener('pointermove',e=>{
+  if(e.pointerType!=='mouse')return;
+  const i=idxFromEvent(e);if(i!==hover){hover=i;draw();}
+});
+cv.addEventListener('pointerleave',()=>{hover=-1;draw();});
+
+function seg(id,cb){
+  const el=$(id);
+  el.addEventListener('click',e=>{
+    const b=e.target.closest('button');if(!b)return;
+    el.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+    cb(b.dataset.v);if(id!=='segFont')$('bResume').classList.add('hidden');
+  });
+}
+seg('segMode',v=>{mode=v;$('optDiff').classList.toggle('hidden',v!=='ai');$('optFirst').classList.toggle('hidden',v!=='ai');renderStats();});
+seg('segDiff',v=>{diff=+v;renderStats();});
+seg('segFirst',v=>{humanSide=v==='me'?X:O;});
+$('bStart').onclick=newGame;
+$('bNew').onclick=()=>{if(gameActive)newGame();else $('menu').classList.remove('hidden');};
+$('bMenu').onclick=()=>{$('bResume').classList.toggle('hidden',!(gameActive&&!over));$('menu').classList.remove('hidden');};
+$('bResume').onclick=()=>$('menu').classList.add('hidden');
+$('bAgain').onclick=newGame;
+$('bView').onclick=()=>$('endScr').classList.add('hidden');
+$('bEndMenu').onclick=()=>{$('endScr').classList.add('hidden');$('bResume').classList.add('hidden');$('menu').classList.remove('hidden');};
+$('bUndo').onclick=undo;
+$('bSound').onclick=()=>{sound=!sound;$('bSound').textContent=sound?'🔊':'🔇';};
+window.addEventListener('resize',resize);
+resize();updateStatus();
+window.__caro={get board(){return board;},get turn(){return turn;},get over(){return over;},get history(){return history;}};
+})();
+</script>
+</body>
+</html>
