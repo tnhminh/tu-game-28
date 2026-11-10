@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nông Trại Xanh</title>
+<style>
+:root{--bg:#eaf5dc;--panel:#fffdf4;--line:#cbbf94;--acc:#3e9b3a;--acc2:#f2a93b;--txt:#3b2e1a;--mut:#7c6a4a;--soil:#8a5a33;--soilw:#5a3a20}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:linear-gradient(#cfeab2,#eaf5dc 400px) fixed,#eaf5dc;color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh;overflow-x:hidden}
+button{font-family:inherit;cursor:pointer;touch-action:manipulation;color:inherit}
+.back{position:absolute;top:8px;left:8px;z-index:60;color:#fff;text-decoration:none;font-size:13px;background:rgba(40,60,20,.6);padding:5px 11px;border-radius:14px}
+#app{max-width:1000px;margin:0 auto;padding:42px 10px 24px}
+.top{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;margin-bottom:10px}
+.chip{background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:6px 12px;font-weight:700;display:flex;align-items:center;gap:6px;font-size:15px;box-shadow:0 3px 0 var(--line)}
+.chip small{font-weight:500;color:var(--mut);font-size:12px}
+.lv{flex:1;min-width:150px;flex-direction:column;align-items:stretch;gap:2px}
+.bar{height:8px;background:#e8dfc2;border-radius:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,#7cc96a,#3e9b3a);width:0}
+h1{font-size:clamp(20px,5vw,30px);margin:0 0 8px;text-align:center;color:#2f7a2b;text-shadow:0 2px 0 #fff}
+.main{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:12px;align-items:start}
+.field{border-radius:20px;padding:12px;position:relative;overflow:hidden;border:3px solid #6d8f3a;transition:background 2s}
+.sky{display:flex;justify-content:space-between;align-items:center;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5);font-weight:700;margin-bottom:8px;font-size:14px;gap:6px;flex-wrap:wrap}
+.sun{font-size:26px}
+.grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;background:#7da848;padding:8px;border-radius:14px;box-shadow:inset 0 3px 8px rgba(0,0,0,.25)}
+.plot{aspect-ratio:1;border-radius:10px;border:none;background:var(--soil);position:relative;display:flex;align-items:center;justify-content:center;font-size:clamp(22px,6vw,34px);padding:0;box-shadow:inset 0 -4px 0 rgba(0,0,0,.25);transition:background .3s;user-select:none;overflow:hidden}
+.plot.wet{background:var(--soilw)}
+.plot.locked{background:#9bbf63;box-shadow:inset 0 0 0 2px rgba(255,255,255,.35);font-size:11px;color:#244014;font-weight:700;flex-direction:column;line-height:1.1}
+.plot.locked span{font-size:18px}
+.plot.ripe .ic{animation:bob 1s ease-in-out infinite}
+.plot .pb{position:absolute;left:4px;right:4px;bottom:4px;height:4px;border-radius:3px;background:rgba(0,0,0,.35);overflow:hidden}
+.plot .pb i{display:block;height:100%;background:#9be15d}
+.plot .need{position:absolute;top:1px;right:3px;font-size:14px;animation:bob .8s infinite}
+.plot .spark{position:absolute;top:1px;left:3px;font-size:13px}
+.plot:active{transform:scale(.95)}
+@keyframes bob{50%{transform:translateY(-3px)}}
+.tools{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.tools button{flex:1;min-width:90px;padding:9px 6px;border-radius:12px;border:2px solid var(--line);background:var(--panel);font-weight:700;font-size:13px;box-shadow:0 3px 0 var(--line)}
+.tools button:disabled{opacity:.45}
+.card{background:var(--panel);border:2px solid var(--line);border-radius:18px;padding:10px;box-shadow:0 4px 0 var(--line)}
+.tabs{display:flex;gap:5px;margin-bottom:8px}
+.tab{flex:1;min-width:0;padding:8px 2px;border-radius:10px;border:2px solid var(--line);background:#f4ecd2;font-weight:700;font-size:13px}
+.tab.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.seed{display:flex;align-items:center;gap:8px;width:100%;padding:7px 9px;margin-bottom:6px;border-radius:12px;border:2px solid var(--line);background:#fffaf0;text-align:left}
+.seed.sel{border-color:var(--acc);background:#e6f6d8;box-shadow:0 0 0 2px var(--acc) inset}
+.seed:disabled{opacity:.45}
+.seed .ic{font-size:28px;width:36px;text-align:center}
+.seed .mid{flex:1;min-width:0}
+.seed .nm{font-weight:800}
+.seed .ds{font-size:12px;color:var(--mut)}
+.seed .pr{font-weight:800;color:#b46e10;font-size:14px;text-align:right}
+.list{max-height:58vh;overflow-y:auto}
+.inv{display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px dashed var(--line)}
+.inv .ic{font-size:26px}
+.inv .mid{flex:1;min-width:0;font-size:13px}
+.inv .mid b{font-size:15px}
+.small{padding:6px 10px;border-radius:10px;border:2px solid var(--acc);background:#fff;color:var(--acc);font-weight:800;font-size:13px}
+.small:disabled{opacity:.4}
+.btn{padding:11px 18px;border-radius:14px;border:none;background:linear-gradient(#6cc35d,#3e9b3a);color:#fff;font-weight:800;font-size:16px;box-shadow:0 4px 0 #276b24}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #276b24}
+.btn.sec{background:#f4ecd2;color:var(--txt);box-shadow:0 4px 0 var(--line)}
+.btn.red{background:linear-gradient(#f07a5a,#c94a2c);box-shadow:0 4px 0 #7d2a16}
+.btn:disabled{opacity:.5}
+.hot{color:#d9480f;font-weight:800}
+.up{display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px dashed var(--line)}
+.up .ic{font-size:28px}
+.up .mid{flex:1;font-size:13px;min-width:0}
+.stat{display:flex;justify-content:space-between;padding:6px 2px;border-bottom:1px dashed var(--line);font-size:14px;gap:8px}
+.overlay{position:fixed;inset:0;background:rgba(30,45,15,.75);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px}
+.overlay.hide{display:none}
+.modal{background:var(--panel);border:3px solid var(--acc);border-radius:20px;padding:20px;max-width:440px;width:100%;text-align:center;max-height:90vh;overflow-y:auto}
+.modal h2{margin:4px 0 8px;color:#2f7a2b}
+.modal ul{text-align:left;padding-left:20px;font-size:14px;line-height:1.55}
+.modal .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.big{font-size:60px;line-height:1.1}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#2f4a1a;color:#fff;padding:9px 16px;border-radius:12px;z-index:90;font-size:14px;max-width:90vw;text-align:center;animation:tin .25s;pointer-events:none}
+@keyframes tin{from{opacity:0;transform:translate(-50%,8px)}}
+.float{position:fixed;pointer-events:none;font-weight:800;color:#ffd84a;text-shadow:0 2px 0 #3b2e1a;animation:fl 1s ease-out forwards;z-index:40;font-size:18px}
+@keyframes fl{to{transform:translateY(-50px);opacity:0}}
+.night .plot{filter:brightness(.75)}
+@media (max-width:760px){.main{grid-template-columns:1fr}.list{max-height:none}}
+</style>
+</head>
+<body>
+<a class="back" href="../index.html">← Danh sách game</a>
+<div id="app">
+  <h1>🌾 Nông Trại Xanh</h1>
+  <div class="top">
+    <div class="chip">🪙 <span id="money">0</span> <small>xu</small></div>
+    <div class="chip lv"><div style="display:flex;justify-content:space-between"><span>⭐ Cấp <span id="lvl">1</span></span><small id="xpTxt">0/10</small></div><div class="bar"><i id="xpBar"></i></div></div>
+    <div class="chip">🎯 <small>Mục tiêu</small> <span id="goal">0%</span></div>
+  </div>
+  <div class="main">
+    <div>
+      <div class="field" id="field">
+        <div class="sky"><span><span class="sun" id="sunIc">☀️</span> Ngày <span id="day">1</span> · <span id="clock">06:00</span></span><span id="weather">Nắng nhẹ</span></div>
+        <div class="grid" id="grid"></div>
+      </div>
+      <div class="tools">
+        <button id="plantAll">🌱 Trồng hết</button>
+        <button id="waterAll">💧 Tưới hết</button>
+        <button id="harvestAll">🧺 Thu hoạch hết</button>
+      </div>
+      <p style="font-size:12px;color:var(--mut);text-align:center;margin:8px 0 0">Chạm ô đất trống để <b>gieo hạt đang chọn</b> · chạm cây có 💧 để <b>tưới</b> · chạm cây chín ✨ để <b>thu hoạch</b></p>
+    </div>
+    <div class="card">
+      <div class="tabs">
+        <button class="tab on" data-t="seeds">🌱 Hạt</button>
+        <button class="tab" data-t="market">🧺 Chợ</button>
+        <button class="tab" data-t="ups">🛠 Nâng cấp</button>
+        <button class="tab" data-t="info">📋 Khác</button>
+      </div>
+      <div id="p-seeds" class="list"></div>
+      <div id="p-market" class="list" style="display:none"></div>
+      <div id="p-ups" class="list" style="display:none"></div>
+      <div id="p-info" style="display:none">
+        <div id="stats"></div>
+        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px">
+          <button class="btn sec" id="soundBtn">🔊 Bật</button>
+          <button class="btn sec" id="helpBtn">❓ Cách chơi</button>
+          <button class="btn red" id="resetBtn">🗑 Xoá dữ liệu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="startOv"><div class="modal">
+  <div class="big">🧑‍🌾</div>
+  <h2>Nông Trại Xanh</h2>
+  <p style="color:var(--mut);margin:0">Biến mảnh đất nhỏ thành nông trại trù phú!</p>
+  <ul>
+    <li>Chọn hạt giống ở tab <b>🌱 Hạt</b>, rồi <b>chạm ô đất trống</b> để gieo.</li>
+    <li>Cây cần <b>tưới nước</b> (biểu tượng 💧) mới lớn được. Đất ướt sẽ khô dần theo thời gian.</li>
+    <li>Cây lớn theo <b>thời gian thực</b> — kể cả khi bạn tắt game. Ban đêm cây lớn chậm hơn, trời mưa tự tưới, trời nắng gắt đất mau khô.</li>
+    <li>Chạm cây chín ✨ để thu hoạch vào kho, rồi <b>bán ở 🧺 Chợ</b>. Giá thay đổi mỗi ngày — hãy chờ giá 🔥!</li>
+    <li>Lên cấp để mở khoá hạt mới, mua thêm đất 🔒 và <b>🛠 nâng cấp</b>.</li>
+    <li>Mục tiêu: kiếm tổng cộng <b>30.000 xu</b>.</li>
+  </ul>
+  <p style="font-size:12px;color:var(--mut)">Tự động lưu mỗi 5 giây.</p>
+  <div class="row"><button class="btn" id="startBtn">Ra đồng thôi!</button></div>
+</div></div>
+<div class="overlay hide" id="modalOv"><div class="modal" id="modalBox"></div></div>
+
+<script>
+(function(){
+'use strict';
+const KEY='nongTraiXanh_v1',GOAL=30000,DAY=180,COLS=5,ROWS=5;
+const CROPS=[
+ {id:'rau',icon:'🥬',name:'Rau muống',seed:5,price:12,time:20,xp:1,lvl:1},
+ {id:'carot',icon:'🥕',name:'Cà rốt',seed:10,price:26,time:40,xp:2,lvl:1},
+ {id:'ngo',icon:'🌽',name:'Ngô nếp',seed:20,price:55,time:75,xp:3,lvl:2},
+ {id:'cachua',icon:'🍅',name:'Cà chua',seed:35,price:95,time:110,xp:5,lvl:3},
+ {id:'khoai',icon:'🍠',name:'Khoai lang',seed:50,price:140,time:150,xp:7,lvl:4},
+ {id:'dau',icon:'🍓',name:'Dâu tây',seed:80,price:230,time:200,xp:10,lvl:5},
+ {id:'dua',icon:'🍉',name:'Dưa hấu',seed:140,price:420,time:300,xp:15,lvl:7},
+ {id:'bi',icon:'🎃',name:'Bí ngô',seed:220,price:700,time:420,xp:22,lvl:9},
+ {id:'dua2',icon:'🍍',name:'Dứa',seed:350,price:1150,time:600,xp:30,lvl:11}
+];
+const UPGRADES=[
+ {id:'voi',icon:'🚿',name:'Vòi phun',desc:'Mở nút "Tưới hết" cho mọi ô',cost:250,lvl:2},
+ {id:'phan',icon:'🧪',name:'Phân bón hữu cơ',desc:'Cây lớn nhanh hơn 30%',cost:500,lvl:3},
+ {id:'gieng',icon:'🪣',name:'Giếng nước sâu',desc:'Đất giữ nước lâu gấp đôi',cost:700,lvl:4},
+ {id:'xe',icon:'🚚',name:'Xe tải ra chợ',desc:'Giá bán +20%',cost:2200,lvl:5},
+ {id:'tuoi',icon:'💦',name:'Tưới tự động',desc:'Cây không bao giờ khô',cost:4000,lvl:6},
+ {id:'den',icon:'💡',name:'Đèn sưởi nhà kính',desc:'Ban đêm cây lớn bình thường',cost:5000,lvl:8},
+ {id:'gat',icon:'🚜',name:'Máy gặt',desc:'Tự thu hoạch cây chín vào kho',cost:9000,lvl:9}
+];
+const WEATHERS=[{id:'sun',ic:'☀️',name:'Nắng nhẹ',drain:1},{id:'hot',ic:'🔥',name:'Nắng gắt (đất mau khô)',drain:1.7},{id:'rain',ic:'🌧️',name:'Mưa (tự tưới)',drain:0},{id:'cloud',ic:'⛅',name:'Nhiều mây',drain:0.8}];
+const C=id=>CROPS.find(c=>c.id===id);
+function fresh(){const plots=[];for(let i=0;i<COLS*ROWS;i++)plots.push({open:i<6,crop:null,g:0,w:0});return{money:60,xp:0,lvl:1,t:DAY*0.05,plots,inv:{},ups:[],sel:'rau',prices:{},weather:'sun',dayN:1,earned:0,harvested:0,planted:0,won:false,sound:true,last:Date.now(),started:false}}
+let S=fresh(),storageOK=true;
+function load(){try{const r=localStorage.getItem(KEY);if(r){S=Object.assign(fresh(),JSON.parse(r));return true}}catch(e){storageOK=false}return false}
+function save(){S.last=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){storageOK=false}}
+const has=id=>S.ups.indexOf(id)>=0;
+const xpNeed=l=>Math.round(10*Math.pow(l,1.5));
+function fmt(n){return Math.floor(n).toLocaleString('vi-VN')}
+function fmtT(s){s=Math.ceil(s);return s>=60?Math.floor(s/60)+'p '+(s%60)+'s':s+'s'}
+
+// day / weather / prices
+function rollDay(){const r=Math.random();S.weather=r<.45?'sun':r<.65?'hot':r<.85?'rain':'cloud';
+  S.prices={};const hot=CROPS[Math.floor(Math.random()*Math.min(CROPS.length,3+S.lvl))].id;
+  CROPS.forEach(c=>S.prices[c.id]=c.id===hot?1.7+Math.random()*.3:0.75+Math.random()*0.5);S.hot=hot}
+function phase(){return (S.t%DAY)/DAY}
+function hour(){return (5+phase()*24)%24}
+function isNight(){const h=hour();return h>=21||h<5}
+function W(){return WEATHERS.find(w=>w.id===S.weather)||WEATHERS[0]}
+function price(c){return Math.round(c.price*(S.prices[c.id]||1)*(has('xe')?1.2:1))}
+function waterDur(c){return Math.max(25,c.time*0.6)*(has('gieng')?2:1)}
+
+// simulation
+function step(dt){
+  const before=Math.floor(S.t/DAY);S.t+=dt;const after=Math.floor(S.t/DAY);
+  if(after>before){S.dayN+=after-before;rollDay();dirtyM=true;if(!sim)toast('🌅 Ngày mới! Thời tiết: '+W().name)}
+  const w=W();const speed=(has('phan')?1.3:1)*(isNight()&&!has('den')?0.6:1);
+  S.plots.forEach((p,i)=>{if(!p.crop)return;const c=C(p.crop);
+    if(p.g>=c.time){if(has('gat'))harvest(i,true);return}
+    if(has('tuoi')||w.drain===0)p.w=waterDur(c);
+    if(p.w>0){p.g=Math.min(c.time,p.g+dt*speed);p.w=Math.max(0,p.w-dt*w.drain)}})
+}
+let sim=false,dirtyM=false;
+function harvest(i,auto){const p=S.plots[i];const c=C(p.crop);if(!c||p.g<c.time)return false;S.inv[c.id]=(S.inv[c.id]||0)+1;p.crop=null;p.g=0;p.w=0;S.harvested++;addXp(c.xp);return true}
+function addXp(x){S.xp+=x;while(S.xp>=xpNeed(S.lvl)){S.xp-=xpNeed(S.lvl);S.lvl++;if(!sim){toast('🎉 Lên cấp '+S.lvl+'! '+(CROPS.filter(c=>c.lvl===S.lvl).map(c=>'Mở khoá '+c.icon+' '+c.name).join(', ')||''));beep(660,.15);setTimeout(()=>beep(880,.2),120);renderSeeds();renderUps()}}}
+function plant(i){const p=S.plots[i];const c=C(S.sel);if(!p.open||p.crop||!c||c.lvl>S.lvl)return false;if(S.money<c.seed){return false}S.money-=c.seed;p.crop=c.id;p.g=0;p.w=(has('tuoi')||W().drain===0)?waterDur(c):0;S.planted++;return true}
+function water(i){const p=S.plots[i];if(!p.crop)return false;const c=C(p.crop);if(p.g>=c.time)return false;const before=p.w;p.w=waterDur(c);return before<p.w*0.5||true}
+function plotPrice(){const n=S.plots.filter(p=>p.open).length;return Math.round(60*Math.pow(1.32,n-6))}
+
+// sound
+let AC=null;function beep(f,d,type,vol){if(!S.sound)return;try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.type=type||'triangle';o.frequency.value=f;g.gain.setValueAtTime(vol||.07,AC.currentTime);g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+d);o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}}
+
+// UI
+const $=id=>document.getElementById(id);
+function toast(t){document.querySelectorAll('.toast').forEach(x=>x.remove());const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2400)}
+function floatAt(el,t){const r=el.getBoundingClientRect();const d=document.createElement('div');d.className='float';d.textContent=t;d.style.left=(r.left+r.width/2-14)+'px';d.style.top=(r.top)+'px';document.body.appendChild(d);setTimeout(()=>d.remove(),1000)}
+function modal(html,btns){const b=$('modalBox');b.innerHTML=html+'<div class="row"></div>';const row=b.querySelector('.row');(btns||[{t:'OK'}]).forEach(x=>{const e=document.createElement('button');e.className='btn '+(x.c||'');e.textContent=x.t;e.onclick=()=>{$('modalOv').classList.add('hide');x.f&&x.f()};row.appendChild(e)});$('modalOv').classList.remove('hide')}
+
+function buildGrid(){const g=$('grid');g.innerHTML='';S.plots.forEach((p,i)=>{const b=document.createElement('button');b.className='plot';b.dataset.i=i;b.addEventListener('click',()=>tapPlot(i,b));g.appendChild(b)})}
+function tapPlot(i,el){const p=S.plots[i];
+  if(!p.open){const idx=S.plots.findIndex(x=>!x.open);if(i!==idx){toast('Hãy mở các ô theo thứ tự — ô kế tiếp có giá '+fmt(plotPrice())+' xu');return}
+    const pr=plotPrice();if(S.money<pr){toast('Cần '+fmt(pr)+' xu để mở rộng đất');beep(200,.1,'sawtooth',.04);return}
+    modal(`<div class="big">🏞️</div><h2>Mua thêm đất?</h2><p>Mở rộng thêm 1 ô đất với giá <b>${fmt(pr)} xu</b>.</p>`,[{t:'Huỷ',c:'sec'},{t:'Mua',f:()=>{if(S.money<pr)return;S.money-=pr;p.open=true;beep(523,.1);beep(784,.15);toast('Đã mở rộng nông trại!');render()}}]);return}
+  if(!p.crop){const c=C(S.sel);if(S.money<c.seed){toast('Không đủ xu mua hạt '+c.name);beep(200,.1,'sawtooth',.04);return}plant(i);beep(440,.06);floatAt(el,'-'+c.seed);render();return}
+  const c=C(p.crop);
+  if(p.g>=c.time){harvest(i);beep(700,.08);beep(1050,.1);floatAt(el,'+1 '+c.icon);render();renderMarket();return}
+  if(p.w<=0||p.w<waterDur(c)*0.4){water(i);beep(900,.05,'sine');floatAt(el,'💧');render();return}
+  toast(c.icon+' '+c.name+': còn '+fmtT((c.time-p.g)/((has('phan')?1.3:1)))+' · đất còn ẩm '+fmtT(p.w))}
+
+function renderGrid(){const els=$('grid').children;const nextLocked=S.plots.findIndex(x=>!x.open);
+  S.plots.forEach((p,i)=>{const b=els[i];let cls='plot',html='';
+    if(!p.open){cls+=' locked';html=i===nextLocked?'<span>🔒</span>'+fmt(plotPrice())+' xu':'<span style="opacity:.4">🌿</span>'}
+    else if(p.crop){const c=C(p.crop);const r=p.g/c.time;if(p.w>0)cls+=' wet';
+      if(r>=1){cls+=' ripe';html=`<span class="ic">${c.icon}</span><span class="spark">✨</span>`}
+      else{html=`<span class="ic" style="font-size:${r<.33?'70%':r<.66?'85%':'95%'}">${r<.33?'🌱':r<.66?'🌿':'🪴'}</span><div class="pb"><i style="width:${r*100}%"></i></div>`+(p.w<=0?'<span class="need">💧</span>':'')}}
+    if(b.className!==cls)b.className=cls;if(b._h!==html){b.innerHTML=html;b._h=html}})}
+function renderSeeds(){const L=$('p-seeds');L.innerHTML='';CROPS.forEach(c=>{const b=document.createElement('button');const locked=c.lvl>S.lvl;b.className='seed'+(S.sel===c.id?' sel':'');b.disabled=locked;
+  b.innerHTML=`<div class="ic">${locked?'🔒':c.icon}</div><div class="mid"><div class="nm">${c.name}</div><div class="ds">${locked?'Mở khoá ở cấp '+c.lvl:'Lớn trong '+fmtT(c.time)+' · bán ~'+c.price+' xu · +'+c.xp+' KN'}</div></div><div class="pr">${c.seed} xu</div>`;
+  b.onclick=()=>{S.sel=c.id;renderSeeds();beep(500,.04)};L.appendChild(b)})}
+function renderMarket(){const L=$('p-market');let total=0;let h='<div style="font-size:13px;color:var(--mut);margin-bottom:6px">Giá hôm nay (ngày '+S.dayN+'). 🔥 = đang được giá cao!</div>';
+  const items=CROPS.filter(c=>c.lvl<=S.lvl||S.inv[c.id]);
+  items.forEach(c=>{const n=S.inv[c.id]||0;const pr=price(c);total+=n*pr;const m=S.prices[c.id]||1;
+    h+=`<div class="inv"><div class="ic">${c.icon}</div><div class="mid"><b>${c.name}</b> × ${n}<br><span class="${c.id===S.hot?'hot':''}">${pr} xu/cái ${c.id===S.hot?'🔥':m<0.9?'📉':m>1.1?'📈':''}</span></div><button class="small" data-s1="${c.id}" ${n?'':'disabled'}>Bán 1</button><button class="small" data-sa="${c.id}" ${n?'':'disabled'}>Bán hết</button></div>`});
+  h+=`<div style="text-align:center;margin-top:10px"><button class="btn" id="sellAll" ${total?'':'disabled'}>Bán tất cả (+${fmt(total)} xu)</button></div>`;
+  L.innerHTML=h;
+  L.querySelectorAll('[data-s1]').forEach(b=>b.onclick=()=>sell(b.dataset.s1,1));
+  L.querySelectorAll('[data-sa]').forEach(b=>b.onclick=()=>sell(b.dataset.sa,S.inv[b.dataset.sa]||0));
+  $('sellAll').onclick=()=>{let g=0;CROPS.forEach(c=>{const n=S.inv[c.id]||0;if(n){g+=n*price(c);S.inv[c.id]=0}});if(g){gain(g);toast('Bán được '+fmt(g)+' xu!')}}}
+function sell(id,n){const c=C(id);n=Math.min(n,S.inv[id]||0);if(!n)return;S.inv[id]-=n;gain(n*price(c))}
+function gain(g){S.money+=g;S.earned+=g;beep(988,.06,'square',.04);setTimeout(()=>beep(1318,.1,'square',.04),60);render();renderMarket();checkWin()}
+function renderUps(){const L=$('p-ups');L.innerHTML='';UPGRADES.forEach(u=>{const own=has(u.id),locked=u.lvl>S.lvl;const d=document.createElement('div');d.className='up';
+  d.innerHTML=`<div class="ic">${u.icon}</div><div class="mid"><b>${u.name}</b><br>${u.desc}<br><span style="color:var(--mut)">${own?'✅ Đã sở hữu':locked?'🔒 Cấp '+u.lvl:fmt(u.cost)+' xu'}</span></div>`;
+  if(!own&&!locked){const b=document.createElement('button');b.className='small';b.textContent='Mua';b.disabled=S.money<u.cost;b.dataset.cost=u.cost;b.onclick=()=>{if(S.money<u.cost)return;S.money-=u.cost;S.ups.push(u.id);toast('Đã mua '+u.name+'!');beep(523,.1);setTimeout(()=>beep(784,.15),100);renderUps();render()};d.appendChild(b)}
+  L.appendChild(d)})}
+function renderStats(){const rows=[['Ngày',S.dayN],['Cấp độ',S.lvl],['Tổng xu kiếm được',fmt(S.earned)],['Số cây đã trồng',S.planted],['Số nông sản đã thu',S.harvested],['Ô đất',S.plots.filter(p=>p.open).length+' / '+S.plots.length],['Nâng cấp',S.ups.length+' / '+UPGRADES.length],['Lưu trữ',storageOK?'Tự động lưu':'Không khả dụng']];
+  $('stats').innerHTML=rows.map(r=>`<div class="stat"><span>${r[0]}</span><b>${r[1]}</b></div>`).join('')}
+const SKY=[[0,'#1b2448'],[5,'#3b3d78'],[6.5,'#f6a96b'],[8,'#7cc4f0'],[16,'#6bb8ec'],[18.5,'#f08a5d'],[20,'#4b3b78'],[21.5,'#1b2448'],[24,'#1b2448']];
+function lerpC(a,b,t){const pa=parseInt(a.slice(1),16),pb=parseInt(b.slice(1),16);const r=Math.round((pa>>16)+((pb>>16)-(pa>>16))*t),g=Math.round((pa>>8&255)+((pb>>8&255)-(pa>>8&255))*t),bl=Math.round((pa&255)+((pb&255)-(pa&255))*t);return `rgb(${r},${g},${bl})`}
+function skyColor(h){for(let i=0;i<SKY.length-1;i++){if(h>=SKY[i][0]&&h<SKY[i+1][0])return lerpC(SKY[i][1],SKY[i+1][1],(h-SKY[i][0])/(SKY[i+1][0]-SKY[i][0]))}return SKY[0][1]}
+function render(){
+  $('money').textContent=fmt(S.money);$('lvl').textContent=S.lvl;$('xpTxt').textContent=S.xp+'/'+xpNeed(S.lvl)+' KN';$('xpBar').style.width=(S.xp/xpNeed(S.lvl)*100)+'%';
+  $('goal').textContent=Math.min(100,Math.floor(S.earned/GOAL*100))+'%';
+  const h=hour();$('clock').textContent=String(Math.floor(h)).padStart(2,'0')+':'+String(Math.floor(h%1*60/10)*10).padStart(2,'0');$('day').textContent=S.dayN;
+  const w=W();$('weather').textContent=w.ic+' '+w.name;const night=isNight();$('sunIc').textContent=night?'🌙':h<7||h>18.5?'🌅':w.id==='rain'?'🌧️':'☀️';
+  const f=$('field');f.style.background=`linear-gradient(${skyColor(h)},${skyColor(h)} 40px,#86b84e 60px)`;f.classList.toggle('night',night);
+  renderGrid();
+  $('waterAll').disabled=!has('voi');$('waterAll').title=has('voi')?'':'Cần nâng cấp Vòi phun';
+  if(!has('voi'))$('waterAll').textContent='💧 Tưới hết 🔒';else $('waterAll').textContent='💧 Tưới hết';
+  document.querySelectorAll('#p-ups .small').forEach(b=>b.disabled=S.money<+b.dataset.cost);
+  const sb=$('p-seeds').children;CROPS.forEach((c,i)=>{if(sb[i])sb[i].style.opacity=c.lvl<=S.lvl&&S.money<c.seed?'.6':''});
+}
+function checkWin(){if(!S.won&&S.earned>=GOAL){S.won=true;save();modal(`<div class="big">🏆</div><h2>Nông trại trù phú!</h2><p>Bạn đã kiếm được <b>${fmt(S.earned)} xu</b> sau ${S.dayN} ngày. Nông Trại Xanh giờ là niềm tự hào của cả làng!</p><p style="font-size:13px;color:var(--mut)">Cấp ${S.lvl} · ${S.harvested} nông sản · ${S.plots.filter(p=>p.open).length} ô đất</p>`,[{t:'Chơi lại từ đầu',c:'sec',f:resetAll},{t:'Tiếp tục làm vườn'}]);beep(523,.2);setTimeout(()=>beep(659,.2),180);setTimeout(()=>beep(784,.4),360)}}
+function resetAll(){try{localStorage.removeItem(KEY)}catch(e){}S=fresh();S.started=true;rollDay();save();renderSeeds();renderUps();renderMarket();render()}
+
+$('plantAll').onclick=()=>{let n=0;S.plots.forEach((p,i)=>{if(plant(i))n++});if(n){beep(440,.08);toast('Đã gieo '+n+' ô '+C(S.sel).icon)}else toast(S.plots.some(p=>p.open&&!p.crop)?'Không đủ xu mua hạt!':'Không còn ô đất trống');render()};
+$('waterAll').onclick=()=>{if(!has('voi'))return;let n=0;S.plots.forEach((p,i)=>{if(p.crop&&p.g<C(p.crop).time&&p.w<waterDur(C(p.crop))*0.9){water(i);n++}});if(n){beep(900,.08,'sine');toast('💧 Đã tưới '+n+' ô')}else toast('Đất đã đủ ẩm');render()};
+$('harvestAll').onclick=()=>{let n=0;S.plots.forEach((p,i)=>{if(harvest(i))n++});if(n){beep(700,.08);beep(1050,.12);toast('🧺 Thu hoạch '+n+' nông sản vào kho');renderMarket()}else toast('Chưa có cây nào chín');render()};
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===t));['seeds','market','ups','info'].forEach(p=>$('p-'+p).style.display=p===t.dataset.t?'':'none');if(t.dataset.t==='market')renderMarket();if(t.dataset.t==='ups')renderUps();if(t.dataset.t==='info')renderStats()});
+$('soundBtn').onclick=()=>{S.sound=!S.sound;$('soundBtn').textContent=S.sound?'🔊 Bật':'🔇 Tắt'};
+$('helpBtn').onclick=()=>{$('startBtn').textContent='Tiếp tục';$('startOv').classList.remove('hide')};
+$('resetBtn').onclick=()=>modal('<h2>Xoá dữ liệu?</h2><p>Toàn bộ nông trại sẽ bị xoá và bắt đầu lại từ đầu.</p>',[{t:'Huỷ',c:'sec'},{t:'Xoá',c:'red',f:()=>{resetAll();toast('Đã xoá dữ liệu')}}]);
+
+let lastH=-1,running=false,lastT=Date.now(),saveAcc=0,mAcc=0;
+function tick(){const now=Date.now();let dt=(now-lastT)/1000;lastT=now;if(!running)return;
+  if(dt>20){offline(dt);return}
+  step(Math.max(0,dt));saveAcc+=dt;if(saveAcc>5){saveAcc=0;save()}
+  render();mAcc+=dt;if(dirtyM||S.harvested!==lastH){dirtyM=false;lastH=S.harvested;renderMarket()}}
+function offline(sec){sec=Math.min(sec,4*3600);const h0=S.harvested,inv0=JSON.stringify(S.inv),d0=S.dayN;sim=true;let left=sec;while(left>0){const s=Math.min(1,left);step(s);left-=s}sim=false;
+  const ripe=S.plots.filter(p=>p.crop&&p.g>=C(p.crop).time).length;
+  modal(`<div class="big">🌄</div><h2>Chào mừng trở lại!</h2><p>Bạn đã vắng mặt <b>${fmtT(sec)}</b>${S.dayN>d0?' ('+(S.dayN-d0)+' ngày trôi qua)':''}.</p><p>${ripe?'🌾 Có <b>'+ripe+'</b> cây đã chín chờ thu hoạch!':'Cây trồng vẫn đang lớn.'}${S.harvested>h0?'<br>🚜 Máy gặt đã thu '+(S.harvested-h0)+' nông sản.':''}</p>`,[{t:'Ra đồng!'}]);renderMarket();render()}
+setInterval(tick,250);
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&running)save()});
+window.addEventListener('beforeunload',()=>{if(running)save()});
+
+const hadSave=load();
+if(!S.prices||!Object.keys(S.prices).length)rollDay();
+buildGrid();renderSeeds();renderUps();renderMarket();render();
+$('soundBtn').textContent=S.sound?'🔊 Bật':'🔇 Tắt';
+if(hadSave&&S.started)$('startBtn').textContent='Tiếp tục';
+let first=true;
+$('startBtn').onclick=()=>{$('startOv').classList.add('hide');if(first){first=false;const away=(Date.now()-S.last)/1000;S.started=true;running=true;lastT=Date.now();if(hadSave&&away>20)offline(away);save()}render()};
+})();
+</script>
+</body>
+</html>

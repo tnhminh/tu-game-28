@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tiệm Phở Triệu Đô</title>
+<style>
+:root{--bg:#2a1810;--panel:#3b2418;--panel2:#4b2f20;--line:#6b4530;--acc:#ffb347;--acc2:#e8603a;--txt:#fff4e2;--mut:#d4b590;--ok:#82d98f;--bad:#ff7b6b}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:radial-gradient(ellipse at 50% -10%,#6a3b22 0,#2a1810 60%) fixed,#2a1810;color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh;overflow-x:hidden}
+button{font-family:inherit;cursor:pointer;touch-action:manipulation}
+.back{position:absolute;top:8px;left:8px;z-index:60;color:var(--mut);text-decoration:none;font-size:13px;background:rgba(0,0,0,.4);padding:5px 11px;border-radius:14px;border:1px solid rgba(255,255,255,.08)}
+.back:hover{color:#fff}
+#app{max-width:1040px;margin:0 auto;padding:44px 12px 24px}
+header{text-align:center;margin-bottom:10px}
+h1{margin:0;font-size:clamp(22px,5vw,34px);letter-spacing:.5px;color:var(--acc);text-shadow:0 3px 0 #7a2e14}
+.money{font-size:clamp(26px,7vw,42px);font-weight:800;margin-top:6px;font-variant-numeric:tabular-nums}
+.pps{color:var(--mut);font-size:14px}
+.goal{max-width:420px;margin:8px auto 0;font-size:12px;color:var(--mut)}
+.bar{height:8px;background:#1d100a;border-radius:6px;overflow:hidden;margin-top:4px;border:1px solid var(--line)}
+.bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--acc2),var(--acc));width:0}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:14px;align-items:start}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px;box-shadow:0 6px 18px rgba(0,0,0,.3)}
+.bowlWrap{display:flex;flex-direction:column;align-items:center;padding:18px 8px;position:relative}
+#bowl{width:min(220px,56vw);height:min(220px,56vw);border-radius:50%;border:none;background:radial-gradient(circle at 40% 35%,#fff7e8,#f2d3a6 55%,#c98a4b 100%);box-shadow:0 10px 0 #8a4b22,0 16px 30px rgba(0,0,0,.5),inset 0 -10px 20px rgba(120,60,20,.35);font-size:min(110px,28vw);line-height:1;display:flex;align-items:center;justify-content:center;transition:transform .06s;user-select:none;-webkit-user-select:none;touch-action:manipulation;position:relative}
+#bowl:active,#bowl.hit{transform:translateY(6px) scale(.97);box-shadow:0 4px 0 #8a4b22,0 8px 18px rgba(0,0,0,.5),inset 0 -10px 20px rgba(120,60,20,.35)}
+.steam{position:absolute;top:-6px;left:50%;width:60px;height:60px;margin-left:-30px;pointer-events:none}
+.steam i{position:absolute;bottom:0;width:10px;height:30px;border-radius:50%;background:rgba(255,255,255,.35);filter:blur(4px);animation:steam 2.4s infinite ease-in}
+.steam i:nth-child(1){left:8px}.steam i:nth-child(2){left:25px;animation-delay:.8s}.steam i:nth-child(3){left:42px;animation-delay:1.6s}
+@keyframes steam{0%{transform:translateY(0) scaleX(1);opacity:0}30%{opacity:.8}100%{transform:translateY(-50px) scaleX(2);opacity:0}}
+.clickInfo{margin-top:16px;color:var(--mut);font-size:14px;text-align:center}
+.float{position:fixed;pointer-events:none;font-weight:800;color:var(--acc);text-shadow:0 2px 0 #000;animation:fl 1s ease-out forwards;z-index:40;font-size:20px;white-space:nowrap}
+@keyframes fl{to{transform:translateY(-70px);opacity:0}}
+.tabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.tab{flex:1;min-width:0;padding:9px 4px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--mut);font-weight:700;font-size:14px}
+.tab.on{background:var(--acc);color:#3a1a08;border-color:var(--acc)}
+.qty{display:flex;gap:6px;justify-content:flex-end;margin-bottom:8px;align-items:center;font-size:13px;color:var(--mut)}
+.qty button{padding:4px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--txt);font-weight:700}
+.qty button.on{background:var(--acc2);border-color:var(--acc2)}
+.item{display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;margin-bottom:7px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--txt);text-align:left;transition:background .15s,opacity .15s}
+.item:hover:not(:disabled){background:#5d3b28}
+.item:disabled{opacity:.45;cursor:not-allowed}
+.item .ic{font-size:30px;width:40px;text-align:center;flex:none}
+.item .mid{flex:1;min-width:0}
+.item .nm{font-weight:700;font-size:15px}
+.item .ds{font-size:12px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .cost{font-size:13px;color:var(--acc);font-weight:700;margin-top:2px}
+.item .cnt{font-size:24px;font-weight:800;color:rgba(255,255,255,.35);flex:none;min-width:34px;text-align:right}
+.item.locked .nm{color:var(--mut)}
+.list{max-height:62vh;overflow-y:auto;padding-right:2px}
+.empty{color:var(--mut);text-align:center;padding:20px;font-size:14px}
+.stat{display:flex;justify-content:space-between;padding:7px 2px;border-bottom:1px dashed var(--line);font-size:14px;gap:8px}
+.stat b{color:var(--acc);text-align:right}
+.btn{padding:11px 18px;border-radius:12px;border:none;background:linear-gradient(180deg,#ffc56a,#f08a2c);color:#3a1a08;font-weight:800;font-size:16px;box-shadow:0 4px 0 #9a4a14}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #9a4a14}
+.btn.sec{background:var(--panel2);color:var(--txt);box-shadow:0 4px 0 #1d100a;border:1px solid var(--line)}
+.btn.red{background:linear-gradient(180deg,#ff8a6b,#d8432a);color:#fff;box-shadow:0 4px 0 #7a1e0e}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.prest{margin-top:12px;text-align:center}
+.prest p{font-size:13px;color:var(--mut);margin:6px 0}
+.overlay{position:fixed;inset:0;background:rgba(15,8,4,.82);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px}
+.overlay.hide{display:none}
+.modal{background:var(--panel);border:2px solid var(--acc);border-radius:18px;padding:20px;max-width:440px;width:100%;text-align:center;max-height:90vh;overflow-y:auto}
+.modal h2{margin:0 0 8px;color:var(--acc)}
+.modal ul{text-align:left;padding-left:20px;font-size:14px;line-height:1.55;color:var(--txt)}
+.modal .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.big{font-size:64px;line-height:1.1}
+#vip{position:fixed;font-size:46px;z-index:45;border:none;background:none;animation:vip 1.2s ease-in-out infinite;filter:drop-shadow(0 0 10px gold);padding:0}
+#vip.hide{display:none}
+@keyframes vip{50%{transform:scale(1.2) rotate(8deg)}}
+.buff{display:inline-block;margin-top:6px;background:#7a2e14;color:#ffd38a;padding:3px 10px;border-radius:10px;font-size:13px;font-weight:700}
+.buff.hide{display:none}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#1d100a;border:1px solid var(--acc);padding:10px 16px;border-radius:12px;z-index:90;font-size:14px;max-width:90vw;text-align:center;animation:tin .3s}
+@keyframes tin{from{opacity:0;transform:translate(-50%,10px)}}
+@media (max-width:760px){.grid{grid-template-columns:1fr}.list{max-height:none}}
+</style>
+</head>
+<body>
+<a class="back" href="../index.html">← Danh sách game</a>
+<div id="app">
+  <header>
+    <h1>🍜 Tiệm Phở Triệu Đô</h1>
+    <div class="money" id="money">0 đ</div>
+    <div class="pps"><span id="pps">0</span> mỗi giây · ⭐ <span id="starsTop">0</span></div>
+    <div class="goal">Mục tiêu: <b>25 tỷ đ</b> (≈ 1 triệu đô) — <span id="goalPct">0%</span><div class="bar"><i id="goalBar"></i></div></div>
+  </header>
+  <div class="grid">
+    <div class="card bowlWrap">
+      <div style="position:relative">
+        <div class="steam"><i></i><i></i><i></i></div>
+        <button id="bowl" aria-label="Nấu phở">🍜</button>
+      </div>
+      <div class="clickInfo">Chạm tô phở: <b id="perClick">+1 đ</b></div>
+      <div class="buff hide" id="buff"></div>
+      <div class="prest card" style="width:100%;margin-top:16px;background:var(--panel2)">
+        <div style="font-weight:800">⭐ Nhượng quyền thương hiệu</div>
+        <p>Bán lại toàn bộ tiệm để nhận <b>Sao Danh Tiếng</b>. Mỗi sao +10% thu nhập vĩnh viễn.</p>
+        <p>Sẽ nhận: <b id="pendStars" style="color:var(--acc)">0</b> sao · Cần thêm <span id="nextStar">-</span></p>
+        <button class="btn" id="prestBtn" disabled>Nhượng quyền</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="tabs">
+        <button class="tab on" data-t="workers">👥 Nhân sự</button>
+        <button class="tab" data-t="ups">⚡ Nâng cấp <span id="upCount"></span></button>
+        <button class="tab" data-t="stats">📊 Thống kê</button>
+      </div>
+      <div id="p-workers">
+        <div class="qty">Mua: <button data-q="1" class="on">x1</button><button data-q="10">x10</button><button data-q="100">x100</button></div>
+        <div class="list" id="wList"></div>
+      </div>
+      <div id="p-ups" style="display:none"><div class="list" id="uList"></div></div>
+      <div id="p-stats" style="display:none">
+        <div id="statList"></div>
+        <div class="row" style="display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap">
+          <button class="btn sec" id="soundBtn">🔊 Âm thanh: Bật</button>
+          <button class="btn sec" id="helpBtn">❓ Cách chơi</button>
+          <button class="btn red" id="resetBtn">🗑 Xoá dữ liệu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<button id="vip" class="hide" aria-label="Khách VIP">🧧</button>
+
+<div class="overlay" id="startOv">
+  <div class="modal">
+    <div class="big">🍜</div>
+    <h2>Tiệm Phở Triệu Đô</h2>
+    <p style="color:var(--mut);margin:0">Từ một gánh phở nhỏ đến đế chế phở toàn cầu!</p>
+    <ul>
+      <li><b>Chạm/nhấn vào tô phở</b> để nấu phở và kiếm tiền.</li>
+      <li>Thuê <b>nhân sự</b> để tự động kiếm tiền mỗi giây.</li>
+      <li>Mua <b>nâng cấp</b> để nhân đôi, nhân ba thu nhập.</li>
+      <li>Thỉnh thoảng có <b>🧧 Khách VIP</b> xuất hiện — chạm nhanh để nhận thưởng lớn!</li>
+      <li>Khi vắng mặt, quán vẫn bán (50% hiệu suất, tối đa 8 giờ).</li>
+      <li>Kiếm đủ 1 triệu đ tổng cộng để <b>Nhượng quyền</b>: reset lại nhưng nhận ⭐ tăng thu nhập vĩnh viễn.</li>
+      <li>Mục tiêu: đạt <b>25 tỷ đ</b> tổng thu nhập!</li>
+    </ul>
+    <p style="font-size:12px;color:var(--mut)">Tự động lưu mỗi 5 giây.</p>
+    <div class="row"><button class="btn" id="startBtn">Mở quán!</button></div>
+  </div>
+</div>
+<div class="overlay hide" id="modalOv"><div class="modal" id="modalBox"></div></div>
+
+<script>
+(function(){
+'use strict';
+const KEY='tiemPhoTrieuDo_v1';
+const GOAL=25e9;
+const WORKERS=[
+ {id:'phubep',icon:'🧑‍🍳',name:'Phụ bếp',desc:'Thái hành, trụng bánh phở',base:15,pps:0.5},
+ {id:'daubep',icon:'🍲',name:'Đầu bếp',desc:'Ninh xương bò suốt đêm',base:120,pps:4},
+ {id:'xeday',icon:'🛒',name:'Gánh phở dạo',desc:'Rong ruổi khắp phố phường',base:1300,pps:22},
+ {id:'quan',icon:'🏮',name:'Quán vỉa hè',desc:'Ghế nhựa đỏ, khách xếp hàng',base:14000,pps:120},
+ {id:'chinhanh',icon:'🏪',name:'Chi nhánh',desc:'Mở thêm cửa hàng mới',base:160000,pps:700},
+ {id:'bep',icon:'🏭',name:'Bếp trung tâm',desc:'Nồi nước dùng 5.000 lít',base:2e6,pps:4500},
+ {id:'giaohang',icon:'🛵',name:'Đội giao hàng',desc:'Phở nóng tận cửa nhà',base:3e7,pps:32000},
+ {id:'quocte',icon:'✈️',name:'Chuỗi quốc tế',desc:'Phở chinh phục năm châu',base:5e8,pps:260000},
+ {id:'vutru',icon:'🚀',name:'Phở vũ trụ',desc:'Giao phở lên trạm không gian',base:8e9,pps:2.2e6}
+];
+const UPS=[];
+function addUp(o){UPS.push(o)}
+addUp({id:'c1',icon:'🥢',name:'Đũa tre xịn',desc:'Giá trị mỗi lần chạm x2',cost:100,type:'click',mult:2,req:s=>s.clicks>=15||s.earned>=60});
+addUp({id:'c2',icon:'🍜',name:'Bánh phở tươi',desc:'Giá trị mỗi lần chạm x2',cost:1500,type:'click',mult:2,req:s=>s.clicks>=100||s.earned>=1000});
+addUp({id:'c3',icon:'🥩',name:'Thịt bò thượng hạng',desc:'Giá trị mỗi lần chạm x3',cost:40000,type:'click',mult:3,req:s=>s.earned>=20000});
+addUp({id:'c4',icon:'📜',name:'Công thức gia truyền',desc:'Mỗi lần chạm +3% thu nhập/giây',cost:600000,type:'clickpct',val:0.03,req:s=>s.earned>=300000});
+addUp({id:'c5',icon:'🥇',name:'Muôi vàng',desc:'Mỗi lần chạm +5% thu nhập/giây',cost:5e7,type:'clickpct',val:0.05,req:s=>s.earned>=2e7});
+addUp({id:'c6',icon:'💎',name:'Tô sứ kim cương',desc:'Giá trị mỗi lần chạm x5',cost:2e9,type:'click',mult:5,req:s=>s.earned>=1e9});
+addUp({id:'g1',icon:'🌿',name:'Rau thơm sạch',desc:'Toàn bộ thu nhập x1.5',cost:30000,type:'all',mult:1.5,req:s=>s.earned>=12000});
+addUp({id:'g2',icon:'💡',name:'Biển hiệu đèn LED',desc:'Toàn bộ thu nhập x1.5',cost:1e6,type:'all',mult:1.5,req:s=>s.earned>=4e5});
+addUp({id:'g3',icon:'📱',name:'Video lan truyền',desc:'Toàn bộ thu nhập x2',cost:4e7,type:'all',mult:2,req:s=>s.earned>=1.5e7});
+addUp({id:'g4',icon:'📰',name:'Lên báo ẩm thực',desc:'Toàn bộ thu nhập x2',cost:1.5e9,type:'all',mult:2,req:s=>s.earned>=6e8});
+addUp({id:'v1',icon:'🧧',name:'Lì xì may mắn',desc:'Khách VIP xuất hiện thường xuyên hơn',cost:250000,type:'vip',req:s=>s.vipClicks>=1});
+const TIERS=[[10,2,12,'Đào tạo bài bản'],[25,2,120,'Dụng cụ inox'],[50,3,2500,'Quy trình chuẩn'],[100,4,1e5,'Huyền thoại']];
+WORKERS.forEach(w=>TIERS.forEach(([n,m,c,t],k)=>addUp({id:w.id+'_'+k,icon:w.icon,name:t+': '+w.name,desc:w.name+' hiệu suất x'+m,cost:w.base*c,type:'w',target:w.id,mult:m,req:s=>(s.workers[w.id]||0)>=n})));
+
+function fresh(){return{money:0,earned:0,lifetime:0,clicks:0,totalClicks:0,stars:0,workers:{},ups:[],vipClicks:0,playTime:0,lastSave:Date.now(),won:false,prestiges:0,sound:true,started:false}}
+let S=fresh();
+let qty=1,frenzy=0,frenzyMult=1,clickFrenzy=0,storageOK=true;
+
+function load(){try{const r=localStorage.getItem(KEY);if(r){const d=JSON.parse(r);S=Object.assign(fresh(),d);return true}}catch(e){storageOK=false}return false}
+function save(){S.lastSave=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){storageOK=false}}
+
+// ---------- number format ----------
+const SUF=['','nghìn','triệu','tỷ','nghìn tỷ','triệu tỷ','tỷ tỷ','nghìn tỷ tỷ','triệu tỷ tỷ'];
+function fmt(n){
+  if(!isFinite(n))return '∞';
+  if(n<0)return '-'+fmt(-n);
+  if(n<1000){return (n<10&&n%1!==0)?n.toFixed(1).replace('.',','):Math.floor(n).toLocaleString('vi-VN')}
+  let i=Math.floor(Math.log10(n)/3);
+  if(i>=SUF.length){return n.toExponential(2).replace('.',',')}
+  let v=n/Math.pow(1000,i);if(v>=999.5){i++;v/=1000;if(i>=SUF.length)return n.toExponential(2).replace('.',',')}
+  return (v>=100?v.toFixed(0):v>=10?v.toFixed(1):v.toFixed(2)).replace('.',',')+' '+SUF[i];
+}
+function fmtTime(sec){sec=Math.floor(sec);const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60;return ((h?h+' giờ ':'')+(h||m?m+' phút ':'')+(h?'':s+' giây')).trim()}
+
+// ---------- economy ----------
+function has(id){return S.ups.indexOf(id)>=0}
+function workerMult(id){let m=1;for(const u of UPS)if(u.type==='w'&&u.target===id&&has(u.id))m*=u.mult;return m}
+function globalMult(){let m=1+0.1*S.stars;for(const u of UPS)if(u.type==='all'&&has(u.id))m*=u.mult;return m}
+function basePps(){let t=0;for(const w of WORKERS)t+=(S.workers[w.id]||0)*w.pps*workerMult(w.id);return t*globalMult()}
+function pps(){return basePps()*(frenzy>0?frenzyMult:1)}
+function perClick(){let m=1;let pct=0;for(const u of UPS){if(!has(u.id))continue;if(u.type==='click')m*=u.mult;if(u.type==='clickpct')pct+=u.val}
+  return (m*(1+0.1*S.stars)+basePps()*pct)*(clickFrenzy>0?7:1)*(frenzy>0?frenzyMult:1)}
+function cost(w,n){const own=S.workers[w.id]||0;return w.base*Math.pow(1.15,own)*(Math.pow(1.15,n)-1)/0.15}
+function totalStars(){return Math.floor(Math.sqrt(S.lifetime/1e6))}
+function pendingStars(){return Math.max(0,totalStars()-S.stars)}
+function earn(v){S.money+=v;S.earned+=v;S.lifetime+=v}
+
+// ---------- sound ----------
+let AC=null;
+function beep(f,d,type,vol){if(!S.sound)return;try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.type=type||'sine';o.frequency.value=f;g.gain.setValueAtTime(vol||.08,AC.currentTime);g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+d);o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}}
+
+// ---------- UI ----------
+const $=id=>document.getElementById(id);
+function toast(t){const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2600)}
+function modal(html,btns){const b=$('modalBox');b.innerHTML=html+'<div class="row"></div>';const row=b.querySelector('.row');(btns||[{t:'OK'}]).forEach(x=>{const e=document.createElement('button');e.className='btn '+(x.c||'');e.textContent=x.t;e.onclick=()=>{$('modalOv').classList.add('hide');x.f&&x.f()};row.appendChild(e)});$('modalOv').classList.remove('hide')}
+
+function buildWorkers(){const L=$('wList');L.innerHTML='';WORKERS.forEach((w,i)=>{const b=document.createElement('button');b.className='item';b.id='w_'+w.id;b.innerHTML=`<div class="ic">${w.icon}</div><div class="mid"><div class="nm">${w.name}</div><div class="ds"></div><div class="cost"></div></div><div class="cnt">0</div>`;b.onclick=()=>buyWorker(w);L.appendChild(b)})}
+function buyWorker(w){const c=cost(w,qty);if(S.money<c)return;S.money-=c;S.workers[w.id]=(S.workers[w.id]||0)+qty;beep(520,.08,'triangle');beep(780,.1,'triangle',.05);refresh(true)}
+function visibleUps(){return UPS.filter(u=>!has(u.id)&&u.req(S)).sort((a,b)=>a.cost-b.cost)}
+let upSig='';
+function buildUps(){const L=$('uList');const v=visibleUps();upSig=v.map(u=>u.id).join(',');L.innerHTML='';if(!v.length){L.innerHTML='<div class="empty">Chưa có nâng cấp mới. Hãy tiếp tục kinh doanh!</div>'}
+  v.forEach(u=>{const b=document.createElement('button');b.className='item';b.dataset.id=u.id;b.innerHTML=`<div class="ic">${u.icon}</div><div class="mid"><div class="nm">${u.name}</div><div class="ds">${u.desc}</div><div class="cost">${fmt(u.cost)} đ</div></div>`;b.onclick=()=>buyUp(u);L.appendChild(b)});
+  $('upCount').textContent=v.length?'('+v.length+')':''}
+function buyUp(u){if(S.money<u.cost||has(u.id))return;S.money-=u.cost;S.ups.push(u.id);beep(660,.1,'square',.05);beep(990,.15,'square',.04);toast('Đã mua: '+u.name);buildUps();refresh(true)}
+
+function refresh(){
+  $('money').textContent=fmt(S.money)+' đ';
+  $('pps').textContent=fmt(pps())+' đ';
+  $('starsTop').textContent=S.stars;
+  $('perClick').textContent='+'+fmt(perClick())+' đ';
+  const g=Math.min(1,S.lifetime/GOAL);$('goalBar').style.width=(g*100)+'%';$('goalPct').textContent=(g*100).toFixed(g<.1?2:1).replace('.',',')+'%';
+  WORKERS.forEach((w,i)=>{const b=$('w_'+w.id);const own=S.workers[w.id]||0;const c=cost(w,qty);
+    const unlocked=i===0||(S.workers[WORKERS[i-1].id]||0)>0||own>0||S.earned>=w.base*0.5;
+    b.classList.toggle('locked',!unlocked);
+    b.querySelector('.nm').textContent=unlocked?w.name:'???';
+    b.querySelector('.ds').textContent=unlocked?(w.desc+' · +'+fmt(w.pps*workerMult(w.id)*globalMult())+'/giây'):'Chưa mở khoá';
+    b.querySelector('.cost').textContent=fmt(c)+' đ'+(qty>1?' (x'+qty+')':'');
+    b.querySelector('.cnt').textContent=own;
+    b.disabled=S.money<c||!unlocked});
+  const v=visibleUps();const sig=v.map(u=>u.id).join(',');if(sig!==upSig)buildUps();
+  document.querySelectorAll('#uList .item').forEach(b=>{const u=UPS.find(x=>x.id===b.dataset.id);if(u)b.disabled=S.money<u.cost});
+  const p=pendingStars();$('pendStars').textContent=p;$('prestBtn').disabled=p<1;
+  const next=Math.pow(S.stars+p+1,2)*1e6-S.lifetime;$('nextStar').textContent=fmt(Math.max(0,next))+' đ cho sao kế tiếp';
+  const bf=$('buff');if(frenzy>0||clickFrenzy>0){bf.classList.remove('hide');bf.textContent=(frenzy>0?'🔥 Giờ cao điểm x'+frenzyMult+' ('+Math.ceil(frenzy)+'s) ':'')+(clickFrenzy>0?'⚡ Chạm x7 ('+Math.ceil(clickFrenzy)+'s)':'')}else bf.classList.add('hide');
+  if($('p-stats').style.display!=='none')renderStats();
+  if(!S.won&&running&&S.lifetime>=GOAL){S.won=true;save();winScreen()}
+}
+function renderStats(){const rows=[['Tiền hiện có',fmt(S.money)+' đ'],['Thu nhập mỗi giây',fmt(pps())+' đ'],['Thu nhập ván này',fmt(S.earned)+' đ'],['Tổng thu nhập mọi thời đại',fmt(S.lifetime)+' đ'],['Số lần chạm (ván này / tổng)',S.clicks+' / '+S.totalClicks],['Tổng nhân sự',Object.values(S.workers).reduce((a,b)=>a+b,0)],['Nâng cấp đã mua',S.ups.length+' / '+UPS.length],['Sao danh tiếng',S.stars+' (+'+(S.stars*10)+'%)'],['Số lần nhượng quyền',S.prestiges],['Khách VIP đã phục vụ',S.vipClicks],['Thời gian chơi',fmtTime(S.playTime)],['Lưu trữ',storageOK?'Đang tự động lưu':'Không khả dụng (chơi tạm)']];
+  $('statList').innerHTML=rows.map(r=>`<div class="stat"><span>${r[0]}</span><b>${r[1]}</b></div>`).join('')}
+
+function floatText(x,y,t,col){const d=document.createElement('div');d.className='float';d.textContent=t;d.style.left=(x-20+Math.random()*30)+'px';d.style.top=(y-30)+'px';if(col)d.style.color=col;document.body.appendChild(d);setTimeout(()=>d.remove(),1000)}
+
+$('bowl').addEventListener('pointerdown',e=>{e.preventDefault();const v=perClick();earn(v);S.clicks++;S.totalClicks++;floatText(e.clientX||innerWidth/2,e.clientY||300,'+'+fmt(v));beep(300+Math.random()*120,.06,'sine',.07);const b=$('bowl');b.classList.add('hit');setTimeout(()=>b.classList.remove('hit'),70);refresh()});
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===t));['workers','ups','stats'].forEach(p=>$('p-'+p).style.display=p===t.dataset.t?'':'none');if(t.dataset.t==='stats')renderStats()});
+document.querySelectorAll('.qty button').forEach(b=>b.onclick=()=>{qty=+b.dataset.q;document.querySelectorAll('.qty button').forEach(x=>x.classList.toggle('on',x===b));refresh()});
+$('prestBtn').onclick=()=>{const p=pendingStars();if(p<1)return;modal(`<div class="big">⭐</div><h2>Nhượng quyền?</h2><p>Bạn sẽ mất toàn bộ tiền, nhân sự và nâng cấp của ván này, nhưng nhận <b>${p} Sao Danh Tiếng</b> (tổng ${S.stars+p} sao = +${(S.stars+p)*10}% thu nhập vĩnh viễn).</p>`,[{t:'Huỷ',c:'sec'},{t:'Nhượng quyền!',f:doPrestige}])};
+function doPrestige(){const p=pendingStars();S.stars+=p;S.prestiges++;S.money=0;S.earned=0;S.clicks=0;S.workers={};S.ups=[];frenzy=0;clickFrenzy=0;buildUps();save();beep(523,.15,'triangle');setTimeout(()=>beep(784,.25,'triangle'),150);toast('⭐ Nhận '+p+' sao! Thu nhập +'+(S.stars*10)+'%');refresh()}
+$('soundBtn').onclick=()=>{S.sound=!S.sound;$('soundBtn').textContent='🔊 Âm thanh: '+(S.sound?'Bật':'Tắt')};
+$('helpBtn').onclick=()=>{$('startBtn').textContent='Tiếp tục';$('startOv').classList.remove('hide')};
+$('resetBtn').onclick=()=>modal('<h2>Xoá dữ liệu?</h2><p>Toàn bộ tiến trình, kể cả Sao Danh Tiếng, sẽ bị xoá vĩnh viễn.</p>',[{t:'Huỷ',c:'sec'},{t:'Xoá hết',c:'red',f:()=>{try{localStorage.removeItem(KEY)}catch(e){}S=fresh();S.started=true;frenzy=0;clickFrenzy=0;buildUps();save();refresh();toast('Đã xoá dữ liệu. Bắt đầu lại từ đầu!')}}]);
+function winScreen(){modal(`<div class="big">🏆</div><h2>Triệu Đô!</h2><p>Chúc mừng! Tổng thu nhập của bạn đã vượt <b>25 tỷ đ</b> — tiệm phở nhỏ đã trở thành đế chế triệu đô!</p><p style="color:var(--mut);font-size:13px">Thời gian chơi: ${fmtTime(S.playTime)} · Sao: ${S.stars} · Chạm: ${S.totalClicks}</p>`,[{t:'Chơi lại từ đầu',c:'sec',f:()=>{try{localStorage.removeItem(KEY)}catch(e){}S=fresh();S.started=true;buildUps();save();refresh()}},{t:'Tiếp tục kinh doanh'}]);beep(523,.2,'triangle');setTimeout(()=>beep(659,.2,'triangle'),180);setTimeout(()=>beep(784,.4,'triangle'),360)}
+
+// ---------- VIP ----------
+let vipTimer=40+Math.random()*40,vipLife=0;
+function spawnVip(){const v=$('vip');v.style.left=(20+Math.random()*(innerWidth-90))+'px';v.style.top=(80+Math.random()*(innerHeight-170))+'px';v.classList.remove('hide');vipLife=9}
+$('vip').addEventListener('pointerdown',e=>{e.preventDefault();$('vip').classList.add('hide');vipLife=0;S.vipClicks++;const r=Math.random();
+  if(r<0.45){const g=Math.max(basePps()*45,perClick()*25,50);earn(g);floatText(e.clientX,e.clientY,'+'+fmt(g),'#ffe066');toast('🧧 Khách VIP boa '+fmt(g)+' đ!')}
+  else if(r<0.8){frenzy=25;frenzyMult=5;toast('🔥 Giờ cao điểm! Thu nhập x5 trong 25 giây')}
+  else{clickFrenzy=12;toast('⚡ Tay nghề thần tốc! Mỗi lần chạm x7 trong 12 giây')}
+  beep(880,.1,'square',.05);setTimeout(()=>beep(1320,.2,'square',.05),90);refresh()});
+
+// ---------- loop ----------
+let last=Date.now(),saveAcc=0,uiAcc=0;
+function tick(){const now=Date.now();let dt=(now-last)/1000;last=now;if(!running)return;
+  if(dt>30){offline(dt);dt=0}
+  dt=Math.max(0,dt);
+  earn(pps()*dt);S.playTime+=dt;
+  if(frenzy>0)frenzy-=dt;if(clickFrenzy>0)clickFrenzy-=dt;
+  if(vipLife>0){vipLife-=dt;if(vipLife<=0)$('vip').classList.add('hide')}
+  else{vipTimer-=dt*(has('v1')?1.6:1);if(vipTimer<=0){vipTimer=50+Math.random()*60;spawnVip()}}
+  saveAcc+=dt;if(saveAcc>=5){saveAcc=0;save()}
+  refresh()}
+function offline(sec){sec=Math.min(sec,8*3600);const g=basePps()*sec*0.5;if(g<1)return;earn(g);modal(`<div class="big">🌙</div><h2>Chào mừng trở lại!</h2><p>Bạn đã vắng mặt <b>${fmtTime(sec)}</b>.</p><p>Nhân viên vẫn chăm chỉ bán phở và kiếm được:</p><p style="font-size:26px;font-weight:800;color:var(--acc)">+${fmt(g)} đ</p>`,[{t:'Tuyệt vời!'}])}
+setInterval(tick,100);
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&running)save()});
+window.addEventListener('beforeunload',()=>{if(running)save()});
+
+// ---------- start ----------
+const hadSave=load();
+buildWorkers();buildUps();
+$('soundBtn').textContent='🔊 Âm thanh: '+(S.sound?'Bật':'Tắt');
+if(hadSave&&S.started)$('startBtn').textContent='Tiếp tục kinh doanh';
+$('startBtn').onclick=()=>{$('startOv').classList.add('hide');const first=!S.started;
+  if(!S.started){S.started=true;S.lastSave=Date.now();save()}
+  else if(hadSave&&!startedOnce){const away=(Date.now()-S.lastSave)/1000;if(away>30)offline(away)}
+  startedOnce=true;running=true;last=Date.now();refresh()};
+let startedOnce=false,running=false;
+refresh();
+})();
+</script>
+</body>
+</html>
