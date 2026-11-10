@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lật Thẻ Ghi Nhớ</title>
+<style>
+:root{
+  --bg1:#fff6e9; --bg2:#ffe9d6;
+  --ink:#23303d; --muted:#667385;
+  --primary:#0f9d8a; --primary-d:#0b7c6d;
+  --accent:#ff6b4a; --sun:#ffc93c;
+  --card:#ffffff; --line:#eadfd2;
+  --good:#22a45d; --bad:#e5484d;
+  --shadow:0 8px 24px rgba(35,48,61,.12);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--ink);
+  background:linear-gradient(160deg,var(--bg1),var(--bg2));min-height:100vh;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+button{font-family:inherit;touch-action:manipulation}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;max-width:720px;margin:0 auto}
+.back{color:var(--primary-d);text-decoration:none;font-size:14px;font-weight:600;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.7)}
+.back:hover{background:#fff}
+.icon-btn{border:0;background:rgba(255,255,255,.7);border-radius:999px;padding:6px 10px;font-size:16px;cursor:pointer}
+main{max-width:720px;margin:0 auto;padding:0 16px 24px}
+.card{background:var(--card);border-radius:20px;box-shadow:var(--shadow);padding:22px}
+h1{margin:4px 0 6px;font-size:clamp(26px,6.5vw,38px);color:var(--primary-d);text-align:center}
+.sub{color:var(--muted);text-align:center;margin:0 0 18px}
+h2{font-size:17px;margin:16px 0 8px}
+.howto{background:#f4fbf9;border:1px dashed #9fd8cf;border-radius:14px;padding:12px 16px 12px 34px;margin:0}
+.howto li{margin:4px 0}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:2px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font-size:15px;cursor:pointer;font-weight:600;color:var(--ink)}
+.chip.on{border-color:var(--primary);background:var(--primary);color:#fff}
+.btn{display:inline-block;border:0;border-radius:14px;padding:13px 22px;font-size:17px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff;box-shadow:0 4px 0 #d24f30;transition:transform .08s}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #d24f30}
+.btn.ghost{background:#fff;color:var(--ink);border:2px solid var(--line);box-shadow:none}
+.center{text-align:center}
+.best{margin-top:14px;color:var(--muted);font-size:14px;text-align:center}
+.hidden{display:none!important}
+/* game */
+.hud{display:flex;justify-content:space-between;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+.pill{background:#fff;border-radius:999px;padding:6px 12px;box-shadow:var(--shadow);font-size:14px;font-weight:700;white-space:nowrap}
+.pill b{color:var(--accent)}
+.stars-live{letter-spacing:2px}
+.grid{display:grid;gap:10px;margin:0 auto}
+.tile{position:relative;aspect-ratio:3/4;border:0;padding:0;background:transparent;cursor:pointer;perspective:700px;border-radius:14px}
+.tile:focus-visible{outline:3px solid var(--sun);outline-offset:3px}
+.inner{position:absolute;inset:0;transition:transform .4s;transform-style:preserve-3d}
+.tile.up .inner,.tile.done .inner{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;border-radius:14px;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 4px 0 rgba(0,0,0,.08)}
+.back-face{background:linear-gradient(135deg,var(--primary),#36c2ae);color:#fff;font-size:clamp(18px,5vw,30px);
+  background-image:radial-gradient(circle at 25% 25%,rgba(255,255,255,.25) 0 12%,transparent 13%),radial-gradient(circle at 75% 75%,rgba(255,255,255,.18) 0 12%,transparent 13%),linear-gradient(135deg,var(--primary),#36c2ae)}
+.front{background:#fff;transform:rotateY(180deg);border:3px solid var(--line)}
+.front .em{font-size:var(--emsize,40px);line-height:1}
+.front .nm{font-size:clamp(10px,2.6vw,13px);font-weight:700;color:var(--muted);margin-top:4px;text-align:center;line-height:1.1;padding:0 2px}
+.tile.done .front{border-color:var(--good);background:#eefaf3;animation:match .45s}
+.tile.miss .front{border-color:var(--bad);background:#fdecec}
+@keyframes match{50%{transform:rotateY(180deg) scale(1.08)}}
+.row2{display:flex;justify-content:center;gap:10px;margin-top:14px;flex-wrap:wrap}
+.link-btn{border:0;background:rgba(255,255,255,.7);border-radius:999px;color:var(--ink);font-weight:700;font-size:14px;cursor:pointer;padding:8px 14px}
+/* result */
+.big-stars{font-size:52px;text-align:center;letter-spacing:6px;margin:6px 0}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}
+.stat{background:#fbf6f0;border-radius:12px;padding:10px;text-align:center}
+.stat b{display:block;font-size:22px}
+.stat span{font-size:13px;color:var(--muted)}
+.actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:16px 0 4px}
+.newbest{color:var(--good);font-weight:800;text-align:center}
+.confetti{position:fixed;top:-20px;font-size:22px;pointer-events:none;animation:fall linear forwards;z-index:9}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="back" href="../index.html">← Danh sách game</a>
+  <button class="icon-btn" id="soundBtn" aria-label="Bật/tắt âm thanh">🔊</button>
+</div>
+<main>
+  <section id="start" class="card">
+    <h1>🃏 Lật Thẻ Ghi Nhớ</h1>
+    <p class="sub">Tìm tất cả các cặp thẻ giống nhau!</p>
+    <ol class="howto">
+      <li>Chạm/bấm vào một thẻ để lật, rồi lật thêm một thẻ nữa.</li>
+      <li>Hai thẻ giống nhau sẽ được giữ lại; khác nhau sẽ úp xuống.</li>
+      <li>Tìm hết các cặp với <b>ít lượt</b> và <b>nhanh</b> nhất để được 3 ⭐.</li>
+      <li>Bàn phím: dùng <b>phím mũi tên</b> để di chuyển, <b>Enter</b>/<b>Space</b> để lật.</li>
+    </ol>
+    <h2>Chủ đề</h2>
+    <div class="chips" id="themeChips"></div>
+    <h2>Kích thước</h2>
+    <div class="chips" id="sizeChips"></div>
+    <div class="center" style="margin-top:22px"><button class="btn" id="startBtn">Bắt đầu ▶</button></div>
+    <div class="best" id="bestLine"></div>
+  </section>
+
+  <section id="game" class="hidden">
+    <div class="hud">
+      <span class="pill">🔁 Lượt: <b id="moves">0</b></span>
+      <span class="pill">⏱️ <b id="time">0:00</b></span>
+      <span class="pill">🧩 <b id="pairs">0</b>/<span id="pairsTotal">0</span></span>
+      <span class="pill stars-live" id="liveStars">⭐⭐⭐</span>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="row2">
+      <button class="link-btn" id="restartBtn">↻ Chơi lại</button>
+      <button class="link-btn" id="menuBtn2">☰ Đổi chủ đề</button>
+    </div>
+  </section>
+
+  <section id="result" class="card hidden">
+    <h1>Hoàn thành! 🎉</h1>
+    <div class="big-stars" id="rStars">⭐⭐⭐</div>
+    <div class="newbest hidden" id="newBest">🏆 Kỷ lục mới!</div>
+    <p class="sub" id="rMsg"></p>
+    <div class="stats">
+      <div class="stat"><b id="rMoves">0</b><span>Lượt lật</span></div>
+      <div class="stat"><b id="rTime">0:00</b><span>Thời gian</span></div>
+      <div class="stat"><b id="rBest" style="font-size:16px;line-height:1.7">–</b><span>Kỷ lục</span></div>
+    </div>
+    <div class="actions">
+      <button class="btn" id="againBtn">Chơi lại ↻</button>
+      <button class="btn ghost" id="menuBtn">Đổi chủ đề</button>
+    </div>
+  </section>
+</main>
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const store={
+  get(k,d){ try{ const v=localStorage.getItem(k); return v==null?d:JSON.parse(v); }catch(e){ return d; } },
+  set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+};
+let muted=store.get("ltgn_muted",false), actx=null;
+function beep(f,d,type,v){
+  if(muted) return;
+  try{
+    actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    const o=actx.createOscillator(), g=actx.createGain();
+    o.type=type||"sine"; o.frequency.value=f;
+    g.gain.setValueAtTime(v||.1,actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.0001,actx.currentTime+d);
+    o.connect(g); g.connect(actx.destination); o.start(); o.stop(actx.currentTime+d);
+  }catch(e){}
+}
+function renderSound(){ $("soundBtn").textContent=muted?"🔇":"🔊"; }
+$("soundBtn").onclick=()=>{ muted=!muted; store.set("ltgn_muted",muted); renderSound(); };
+renderSound();
+
+const THEMES={
+  animal:{name:"🐶 Con vật",items:[["🐶","Chó"],["🐱","Mèo"],["🐭","Chuột"],["🐰","Thỏ"],["🦊","Cáo"],["🐻","Gấu"],["🐼","Gấu trúc"],["🐨","Gấu túi"],["🐯","Hổ"],["🦁","Sư tử"],["🐮","Bò"],["🐷","Heo"],["🐸","Ếch"],["🐵","Khỉ"],["🐔","Gà"],["🐧","Chim cánh cụt"],["🐢","Rùa"],["🐘","Voi"]]},
+  fruit:{name:"🍉 Trái cây",items:[["🍎","Táo"],["🍐","Lê"],["🍊","Cam"],["🍋","Chanh"],["🍌","Chuối"],["🍉","Dưa hấu"],["🍇","Nho"],["🍓","Dâu tây"],["🍈","Dưa lưới"],["🍒","Anh đào"],["🍑","Đào"],["🍍","Dứa"],["🥭","Xoài"],["🥥","Dừa"],["🥝","Kiwi"]]},
+  flag:{name:"🚩 Cờ các nước",items:[["🇻🇳","Việt Nam"],["🇯🇵","Nhật Bản"],["🇰🇷","Hàn Quốc"],["🇫🇷","Pháp"],["🇩🇪","Đức"],["🇮🇹","Ý"],["🇬🇧","Anh"],["🇺🇸","Hoa Kỳ"],["🇧🇷","Brasil"],["🇹🇭","Thái Lan"],["🇱🇦","Lào"],["🇰🇭","Campuchia"],["🇨🇦","Canada"],["🇦🇺","Úc"],["🇪🇸","Tây Ban Nha"]]}
+};
+const SIZES={
+  easy:{name:"Dễ · 4×3",cols:4,rows:3},
+  mid:{name:"Vừa · 4×4",cols:4,rows:4},
+  hard:{name:"Khó · 6×4",cols:6,rows:4}
+};
+let theme=store.get("ltgn_theme","animal"), size=store.get("ltgn_size","easy");
+if(!THEMES[theme]) theme="animal"; if(!SIZES[size]) size="easy";
+const bestKey=()=>"ltgn_best_"+theme+"_"+size;
+const fmt=s=>Math.floor(s/60)+":"+String(s%60).padStart(2,"0");
+
+function chips(){
+  const tc=$("themeChips"); tc.innerHTML="";
+  Object.entries(THEMES).forEach(([id,t])=>{
+    const b=document.createElement("button"); b.className="chip"+(theme===id?" on":""); b.textContent=t.name;
+    b.onclick=()=>{ theme=id; store.set("ltgn_theme",theme); chips(); }; tc.appendChild(b);
+  });
+  const sc=$("sizeChips"); sc.innerHTML="";
+  Object.entries(SIZES).forEach(([id,s])=>{
+    const b=document.createElement("button"); b.className="chip"+(size===id?" on":""); b.textContent=s.name;
+    b.onclick=()=>{ size=id; store.set("ltgn_size",size); chips(); }; sc.appendChild(b);
+  });
+  const best=store.get(bestKey(),null);
+  $("bestLine").textContent = best ? `🏆 Kỷ lục: ${"⭐".repeat(best.stars)} · ${best.moves} lượt · ${fmt(best.time)}` : "Chưa có kỷ lục cho lựa chọn này.";
+}
+
+let S=null, timerId=0;
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function show(id){ ["start","game","result"].forEach(s=>$(s).classList.toggle("hidden",s!==id)); window.scrollTo(0,0); }
+
+function layout(){
+  if(!S) return;
+  const sz=SIZES[size];
+  let cols=sz.cols;
+  const w=Math.min(document.documentElement.clientWidth, 720) - 32;
+  if(cols===6 && w<480) cols=4;          // 6×4 → 4×6 on phones
+  const rows=S.cards.length/cols;
+  // fit height too
+  const availH=window.innerHeight - 200;
+  const gap=w<420?8:10;
+  const byW=(w-gap*(cols-1))/cols;
+  const byH=((availH-gap*(rows-1))/rows)*3/4;
+  const cw=Math.max(48, Math.min(byW, byH, 130));
+  const g=$("grid");
+  g.style.gap=gap+"px";
+  g.style.gridTemplateColumns=`repeat(${cols}, ${cw}px)`;
+  g.style.width=(cw*cols+gap*(cols-1))+"px";
+  g.style.setProperty("--emsize", Math.round(cw*(theme==="flag"?0.42:0.5))+"px");
+  S.cols=cols;
+}
+
+function start(){
+  const sz=SIZES[size], n=sz.cols*sz.rows/2;
+  const items=shuffle(THEMES[theme].items.slice()).slice(0,n);
+  const cards=shuffle(items.concat(items).map((it,i)=>({e:it[0],n:it[1],id:it[0]})));
+  S={cards,first:null,second:null,lock:false,moves:0,pairs:0,total:n,time:0,started:false,done:false};
+  clearInterval(timerId);
+  const g=$("grid"); g.innerHTML="";
+  cards.forEach((c,i)=>{
+    const b=document.createElement("button");
+    b.className="tile"; b.dataset.i=i;
+    b.setAttribute("aria-label","Thẻ úp "+(i+1));
+    b.innerHTML=`<div class="inner"><div class="face back-face">?</div><div class="face front"><span class="em"></span>${theme==="flag"?'<span class="nm"></span>':""}</div></div>`;
+    b.querySelector(".em").textContent=c.e;
+    if(theme==="flag") b.querySelector(".nm").textContent=c.n;
+    b.addEventListener("click",()=>flip(i));
+    g.appendChild(b);
+    c.el=b;
+  });
+  $("pairsTotal").textContent=n;
+  hud(); show("game"); layout();
+  setTimeout(()=>{ const f=g.querySelector(".tile"); if(f && !("ontouchstart" in window)) f.focus({preventScroll:true}); },30);
+}
+function starsFor(moves,n){ return moves<=Math.ceil(n*1.5)?3: moves<=Math.ceil(n*2.2)?2:1; }
+function hud(){
+  $("moves").textContent=S.moves; $("time").textContent=fmt(S.time);
+  $("pairs").textContent=S.pairs;
+  const st=starsFor(S.moves,S.total);
+  $("liveStars").textContent="⭐".repeat(st)+"☆".repeat(3-st);
+}
+function flip(i){
+  if(!S||S.lock||S.done) return;
+  const c=S.cards[i];
+  if(c.matched||c===S.first) return;
+  if(!S.started){ S.started=true; timerId=setInterval(()=>{ S.time++; hud(); },1000); }
+  c.el.classList.add("up");
+  c.el.setAttribute("aria-label", c.n);
+  beep(520,.06,"triangle",.06);
+  if(!S.first){ S.first=c; return; }
+  S.second=c; S.moves++; S.lock=true; hud();
+  if(S.first.id===c.id){
+    const a=S.first,b=c;
+    setTimeout(()=>{
+      a.matched=b.matched=true;
+      a.el.classList.add("done"); b.el.classList.add("done");
+      S.first=S.second=null; S.lock=false; S.pairs++; hud();
+      beep(660,.1,"triangle"); setTimeout(()=>beep(990,.12,"triangle"),80);
+      if(S.pairs===S.total) win();
+    },350);
+  } else {
+    const a=S.first,b=c;
+    setTimeout(()=>{ a.el.classList.add("miss"); b.el.classList.add("miss"); beep(220,.12,"square",.04); },350);
+    setTimeout(()=>{
+      [a,b].forEach(x=>{ x.el.classList.remove("up","miss"); x.el.setAttribute("aria-label","Thẻ úp"); });
+      S.first=S.second=null; S.lock=false;
+    },950);
+  }
+}
+function win(){
+  S.done=true; clearInterval(timerId);
+  const stars=starsFor(S.moves,S.total);
+  $("rStars").textContent="⭐".repeat(stars)+"☆".repeat(3-stars);
+  $("rMoves").textContent=S.moves; $("rTime").textContent=fmt(S.time);
+  $("rMsg").textContent = stars===3?"Trí nhớ siêu đẳng! 🧠✨" : stars===2?"Rất tốt! Thử lại để đạt 3 sao nhé!" : "Hoàn thành rồi! Luyện thêm để nhớ nhanh hơn nào 💪";
+  const key=bestKey(), best=store.get(key,null);
+  const better=!best || S.moves<best.moves || (S.moves===best.moves && S.time<best.time);
+  if(better) store.set(key,{moves:S.moves,time:S.time,stars});
+  const b=better?{moves:S.moves,time:S.time}:best;
+  $("rBest").textContent=b.moves+" lượt · "+fmt(b.time);
+  $("newBest").classList.toggle("hidden",!better);
+  [523,659,784,1046,1318].forEach((f,i)=>setTimeout(()=>beep(f,.16,"triangle"),i*110));
+  setTimeout(()=>{ show("result"); confetti(); },700);
+}
+function confetti(){
+  const set=THEMES[theme].items.slice(0,8).map(x=>x[0]).concat(["🎉","⭐","✨"]);
+  for(let i=0;i<26;i++){
+    const d=document.createElement("div"); d.className="confetti";
+    d.textContent=set[i%set.length];
+    d.style.left=Math.random()*96+"vw";
+    d.style.animationDuration=(1.8+Math.random()*1.8)+"s";
+    d.style.animationDelay=(Math.random()*.6)+"s";
+    document.body.appendChild(d);
+    setTimeout(()=>d.remove(),4500);
+  }
+}
+// keyboard navigation on the grid
+document.addEventListener("keydown",e=>{
+  if($("game").classList.contains("hidden")){
+    if(e.key==="Enter" && !$("start").classList.contains("hidden") && document.activeElement.tagName!=="BUTTON") start();
+    return;
+  }
+  const tiles=[...$("grid").children];
+  let i=tiles.indexOf(document.activeElement);
+  const dirs={ArrowLeft:-1,ArrowRight:1,ArrowUp:-S.cols,ArrowDown:S.cols};
+  if(e.key in dirs){
+    e.preventDefault();
+    if(i<0) i=0; else i=Math.min(tiles.length-1,Math.max(0,i+dirs[e.key]));
+    tiles[i].focus();
+  }
+});
+window.addEventListener("resize",layout);
+$("startBtn").onclick=start;
+$("againBtn").onclick=start;
+$("restartBtn").onclick=start;
+$("menuBtn").onclick=()=>{ chips(); show("start"); };
+$("menuBtn2").onclick=()=>{ clearInterval(timerId); chips(); show("start"); };
+chips();
+window.__mem={get S(){return S;}, flip:i=>flip(i)};
+})();
+</script>
+</body>
+</html>

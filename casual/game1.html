@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Đố Vui Việt Nam</title>
+<style>
+:root{
+  --bg1:#fff6e9; --bg2:#ffe9d6;
+  --ink:#23303d; --muted:#667385;
+  --primary:#0f9d8a; --primary-d:#0b7c6d;
+  --accent:#ff6b4a; --sun:#ffc93c;
+  --card:#ffffff; --line:#eadfd2;
+  --good:#22a45d; --bad:#e5484d;
+  --shadow:0 8px 24px rgba(35,48,61,.12);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  color:var(--ink);
+  background:linear-gradient(160deg,var(--bg1),var(--bg2));
+  min-height:100vh; overflow-x:hidden;
+  -webkit-tap-highlight-color:transparent;
+}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;max-width:760px;margin:0 auto}
+.back{color:var(--primary-d);text-decoration:none;font-size:14px;font-weight:600;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.7)}
+.back:hover{background:#fff}
+.icon-btn{border:0;background:rgba(255,255,255,.7);border-radius:999px;padding:6px 10px;font-size:16px;cursor:pointer}
+main{max-width:760px;margin:0 auto;padding:0 16px 32px}
+.card{background:var(--card);border-radius:20px;box-shadow:var(--shadow);padding:22px}
+h1{margin:4px 0 6px;font-size:clamp(26px,6vw,38px);color:var(--primary-d);text-align:center}
+.sub{color:var(--muted);text-align:center;margin:0 0 18px}
+h2{font-size:18px;margin:18px 0 10px}
+.howto{background:#f4fbf9;border:1px dashed #9fd8cf;border-radius:14px;padding:12px 16px;margin:0}
+.howto li{margin:4px 0}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:2px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font-size:15px;cursor:pointer;font-weight:600;color:var(--ink)}
+.chip.on{border-color:var(--primary);background:var(--primary);color:#fff}
+.btn{display:inline-block;border:0;border-radius:14px;padding:13px 22px;font-size:17px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff;box-shadow:0 4px 0 #d24f30;transition:transform .08s}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #d24f30}
+.btn.alt{background:var(--primary);box-shadow:0 4px 0 var(--primary-d)}
+.btn.ghost{background:#fff;color:var(--ink);border:2px solid var(--line);box-shadow:none}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.center{text-align:center}
+.best{margin-top:14px;color:var(--muted);font-size:14px;text-align:center}
+.hidden{display:none!important}
+/* quiz */
+.hud{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;font-weight:700}
+.pill{background:#fff;border-radius:999px;padding:6px 12px;box-shadow:var(--shadow);font-size:14px}
+.pill b{color:var(--accent)}
+.timebar{height:10px;background:#f1e6da;border-radius:999px;overflow:hidden;margin:6px 0 14px}
+.timebar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--good),var(--sun));transition:width .1s linear}
+.timebar.low i{background:linear-gradient(90deg,var(--bad),var(--accent))}
+.cat{display:inline-block;font-size:13px;font-weight:700;color:#fff;background:var(--primary);border-radius:999px;padding:3px 10px;margin-bottom:8px}
+.question{font-size:clamp(18px,4.6vw,23px);line-height:1.4;margin:4px 0 16px;min-height:2.8em}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:560px){.opts{grid-template-columns:1fr}}
+.opt{display:flex;align-items:center;gap:10px;text-align:left;border:2px solid var(--line);background:#fff;border-radius:14px;padding:12px 14px;font-size:16px;cursor:pointer;color:var(--ink);min-height:54px;transition:transform .08s,border-color .15s}
+.opt:hover:not(:disabled){border-color:var(--primary)}
+.opt:active:not(:disabled){transform:scale(.98)}
+.opt .k{flex:none;width:28px;height:28px;border-radius:50%;background:#f3ece4;display:grid;place-items:center;font-weight:800;font-size:14px}
+.opt.correct{border-color:var(--good);background:#e8f8ee}
+.opt.correct .k{background:var(--good);color:#fff}
+.opt.wrong{border-color:var(--bad);background:#fdecec}
+.opt.wrong .k{background:var(--bad);color:#fff}
+.opt.gone{visibility:hidden}
+.opt:disabled{cursor:default}
+.tools{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;align-items:center;margin-top:16px}
+.tools .left{display:flex;gap:8px;flex-wrap:wrap}
+.life{border:2px solid var(--sun);background:#fff8e1;border-radius:12px;padding:8px 12px;font-weight:700;cursor:pointer;font-size:14px;color:var(--ink)}
+.life:disabled{opacity:.4;cursor:not-allowed;text-decoration:line-through}
+.feedback{min-height:24px;margin-top:12px;font-weight:700;text-align:center}
+.feedback.good{color:var(--good)} .feedback.bad{color:var(--bad)}
+.streak-pop{animation:pop .5s}
+@keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.25)}100%{transform:scale(1)}}
+/* results */
+.big{font-size:44px;font-weight:900;color:var(--accent);text-align:center;margin:4px 0}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0}
+@media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{background:#fbf6f0;border-radius:12px;padding:10px;text-align:center}
+.stat b{display:block;font-size:22px}
+.stat span{font-size:13px;color:var(--muted)}
+.review{list-style:none;padding:0;margin:0}
+.review li{border-left:5px solid var(--line);background:#fdfaf6;border-radius:10px;padding:10px 12px;margin:8px 0;font-size:15px}
+.review li.ok{border-left-color:var(--good)}
+.review li.no{border-left-color:var(--bad)}
+.review li.sk{border-left-color:var(--sun)}
+.review .q{font-weight:700;margin-bottom:4px}
+.review .a{color:var(--muted)}
+.review .a em{font-style:normal;font-weight:700;color:var(--good)}
+.review .a s{color:var(--bad)}
+.review .note{font-size:13px;color:var(--muted);margin-top:4px}
+.actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:16px 0}
+.newbest{color:var(--good);font-weight:800;text-align:center}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="back" href="../index.html">← Danh sách game</a>
+  <button class="icon-btn" id="soundBtn" title="Bật/tắt âm thanh" aria-label="Bật/tắt âm thanh">🔊</button>
+</div>
+<main>
+  <!-- START -->
+  <section id="start" class="card">
+    <h1>🇻🇳 Đố Vui Việt Nam</h1>
+    <p class="sub">Bạn hiểu quê hương mình đến đâu?</p>
+    <ol class="howto">
+      <li>Chọn chủ đề và số câu, rồi bấm <b>Bắt đầu</b>.</li>
+      <li>Mỗi câu có <b>20 giây</b>. Trả lời càng nhanh, điểm thưởng càng cao.</li>
+      <li>Trả lời đúng liên tiếp để nhận <b>thưởng chuỗi</b> 🔥.</li>
+      <li>Trợ giúp (mỗi loại dùng 1 lần): <b>50/50</b> bỏ 2 đáp án sai, <b>Bỏ qua</b> câu khó mà không mất chuỗi.</li>
+      <li>Bàn phím: phím <b>1–4</b> hoặc <b>A–D</b> để chọn, <b>Enter</b> để sang câu.</li>
+    </ol>
+    <h2>Chủ đề</h2>
+    <div class="chips" id="catChips"></div>
+    <h2>Số câu hỏi</h2>
+    <div class="chips" id="numChips"></div>
+    <div class="center" style="margin-top:22px"><button class="btn" id="startBtn">Bắt đầu ▶</button></div>
+    <div class="best" id="bestLine"></div>
+  </section>
+
+  <!-- QUIZ -->
+  <section id="quiz" class="hidden">
+    <div class="hud">
+      <span class="pill">Câu <b id="qNum">1</b>/<span id="qTotal">10</span></span>
+      <span class="pill" id="streakPill">🔥 Chuỗi <b id="streak">0</b></span>
+      <span class="pill">⭐ <b id="score">0</b></span>
+    </div>
+    <div class="timebar" id="timebar"><i id="timefill"></i></div>
+    <div class="card">
+      <span class="cat" id="qCat">Địa lý</span>
+      <div class="question" id="qText"></div>
+      <div class="opts" id="opts"></div>
+      <div class="feedback" id="feedback"></div>
+      <div class="tools">
+        <div class="left">
+          <button class="life" id="fiftyBtn">✂️ 50/50</button>
+          <button class="life" id="skipBtn">⏭️ Bỏ qua</button>
+        </div>
+        <span class="pill">⏱️ <b id="timeLeft">20</b>s</span>
+      </div>
+      <div class="center" style="margin-top:14px"><button class="btn alt hidden" id="nextBtn">Câu tiếp ▶</button></div>
+    </div>
+  </section>
+
+  <!-- RESULT -->
+  <section id="result" class="card hidden">
+    <h1>Kết quả</h1>
+    <div class="big" id="finalScore">0</div>
+    <div class="newbest hidden" id="newBest">🏆 Kỷ lục mới!</div>
+    <p class="sub" id="verdict"></p>
+    <div class="stats">
+      <div class="stat"><b id="sCorrect">0</b><span>Đúng</span></div>
+      <div class="stat"><b id="sWrong">0</b><span>Sai / hết giờ</span></div>
+      <div class="stat"><b id="sSkip">0</b><span>Bỏ qua</span></div>
+      <div class="stat"><b id="sStreak">0</b><span>Chuỗi dài nhất</span></div>
+    </div>
+    <div class="actions">
+      <button class="btn" id="againBtn">Chơi lại ↻</button>
+      <button class="btn ghost" id="menuBtn">Đổi chủ đề</button>
+    </div>
+    <h2>Xem lại đáp án</h2>
+    <ul class="review" id="review"></ul>
+  </section>
+</main>
+
+<script>
+(function(){
+"use strict";
+// ---------- Question bank (answer is always options[0]; shuffled at runtime) ----------
+const Q = [
+// ĐỊA LÝ
+{c:"dl",q:"Thủ đô của Việt Nam là thành phố nào?",o:["Hà Nội","TP. Hồ Chí Minh","Huế","Đà Nẵng"]},
+{c:"dl",q:"Đỉnh núi cao nhất Việt Nam (khoảng 3.143 m) là đỉnh nào?",o:["Fansipan","Ngọc Linh","Bà Đen","Pu Ta Leng"]},
+{c:"dl",q:"Đỉnh Fansipan nằm trên dãy núi nào?",o:["Hoàng Liên Sơn","Trường Sơn","Bạch Mã","Con Voi"]},
+{c:"dl",q:"Hòn đảo lớn nhất Việt Nam là đảo nào?",o:["Phú Quốc","Cát Bà","Côn Sơn","Lý Sơn"]},
+{c:"dl",q:"Vịnh Hạ Long – Di sản thiên nhiên thế giới – thuộc tỉnh nào?",o:["Quảng Ninh","Hải Phòng","Ninh Bình","Thanh Hóa"]},
+{c:"dl",q:"Con sông nào chảy qua thủ đô Hà Nội?",o:["Sông Hồng","Sông Hương","Sông Hàn","Sông Đồng Nai"]},
+{c:"dl",q:"Hang Sơn Đoòng, một trong những hang động lớn nhất thế giới, nằm trong vườn quốc gia nào?",o:["Phong Nha – Kẻ Bàng","Cúc Phương","Cát Tiên","Bạch Mã"]},
+{c:"dl",q:"Đường bờ biển Việt Nam dài khoảng bao nhiêu km?",o:["Khoảng 3.260 km","Khoảng 1.650 km","Khoảng 5.000 km","Khoảng 2.100 km"]},
+{c:"dl",q:"Mũi Cà Mau là điểm cực nào trên phần đất liền Việt Nam?",o:["Cực Nam","Cực Bắc","Cực Đông","Cực Tây"]},
+{c:"dl",q:"Sông Mê Kông khi chảy vào Việt Nam còn được gọi là gì?",o:["Sông Cửu Long","Sông Đà","Sông Mã","Sông Thu Bồn"]},
+{c:"dl",q:"Việt Nam có chung đường biên giới trên đất liền với những nước nào?",o:["Trung Quốc, Lào, Campuchia","Lào, Thái Lan, Campuchia","Trung Quốc, Myanmar, Lào","Campuchia, Thái Lan, Malaysia"]},
+{c:"dl",q:"Thành phố nào thường được gọi là \"thành phố ngàn hoa\"?",o:["Đà Lạt","Nha Trang","Hải Phòng","Cần Thơ"]},
+{c:"dl",q:"Phố cổ Hội An nằm bên bờ con sông nào?",o:["Sông Thu Bồn","Sông Hương","Sông Hồng","Sông Gianh"]},
+{c:"dl",q:"Đèo Hải Vân nối liền Đà Nẵng với địa phương nào?",o:["Huế","Quảng Ngãi","Khánh Hòa","Quảng Trị"]},
+{c:"dl",q:"Việt Nam nằm ở phía đông của bán đảo nào?",o:["Bán đảo Đông Dương","Bán đảo Mã Lai","Bán đảo Triều Tiên","Bán đảo Ả Rập"]},
+{c:"dl",q:"Quần đảo Hoàng Sa và Trường Sa nằm ở vùng biển nào?",o:["Biển Đông","Biển Java","Biển Hoa Đông","Vịnh Thái Lan"]},
+{c:"dl",q:"Đồng bằng rộng lớn nhất Việt Nam là đồng bằng nào?",o:["Đồng bằng sông Cửu Long","Đồng bằng sông Hồng","Đồng bằng Thanh – Nghệ","Đồng bằng duyên hải Nam Trung Bộ"]},
+{c:"dl",q:"Thành phố có dân số đông nhất Việt Nam là?",o:["TP. Hồ Chí Minh","Hà Nội","Hải Phòng","Cần Thơ"]},
+// LỊCH SỬ
+{c:"ls",q:"Ai lãnh đạo quân dân ta đánh tan quân Nam Hán trên sông Bạch Đằng năm 938?",o:["Ngô Quyền","Lê Hoàn","Trần Hưng Đạo","Lý Thường Kiệt"]},
+{c:"ls",q:"Cuộc khởi nghĩa Hai Bà Trưng nổ ra vào năm nào?",o:["Năm 40","Năm 248","Năm 542","Năm 938"]},
+{c:"ls",q:"Ai là tác giả của \"Bình Ngô đại cáo\"?",o:["Nguyễn Trãi","Lê Lợi","Nguyễn Du","Lý Thường Kiệt"]},
+{c:"ls",q:"Triều đại phong kiến cuối cùng của Việt Nam là triều đại nào?",o:["Nhà Nguyễn","Nhà Lê","Nhà Trần","Nhà Tây Sơn"]},
+{c:"ls",q:"Vua Lý Thái Tổ dời đô từ Hoa Lư về Đại La (đổi tên là Thăng Long) vào năm nào?",o:["1010","938","1225","1428"]},
+{c:"ls",q:"Chủ tịch Hồ Chí Minh đọc bản Tuyên ngôn Độc lập vào ngày nào?",o:["2/9/1945","19/8/1945","7/5/1954","30/4/1975"]},
+{c:"ls",q:"Chiến thắng Điện Biên Phủ diễn ra vào năm nào?",o:["1954","1945","1968","1975"]},
+{c:"ls",q:"Ngày giải phóng miền Nam, thống nhất đất nước là ngày nào?",o:["30/4/1975","2/9/1945","7/5/1954","1/5/1975"]},
+{c:"ls",q:"Ai chỉ huy quân Tây Sơn đại phá quân Thanh vào mùa xuân năm Kỷ Dậu 1789?",o:["Quang Trung – Nguyễn Huệ","Nguyễn Nhạc","Gia Long","Lê Lợi"]},
+{c:"ls",q:"Trận Bạch Đằng năm 1288 đánh bại quân Nguyên Mông do ai chỉ huy?",o:["Trần Hưng Đạo","Ngô Quyền","Lê Hoàn","Trần Thủ Độ"]},
+{c:"ls",q:"Văn Miếu ở Thăng Long được xây dựng năm 1070 dưới triều vua nào?",o:["Lý Thánh Tông","Lý Thái Tổ","Trần Nhân Tông","Lê Thánh Tông"]},
+{c:"ls",q:"Trường đại học đầu tiên của Việt Nam (lập năm 1076) có tên là gì?",o:["Quốc Tử Giám","Quốc Học Huế","Đông Kinh Nghĩa Thục","Trường Bưởi"]},
+{c:"ls",q:"Vị vua đầu tiên của nhà Nguyễn là ai?",o:["Gia Long","Minh Mạng","Tự Đức","Bảo Đại"]},
+{c:"ls",q:"Vị vua cuối cùng của chế độ phong kiến Việt Nam là ai?",o:["Bảo Đại","Khải Định","Hàm Nghi","Duy Tân"]},
+{c:"ls",q:"Kinh đô của triều Nguyễn đặt ở đâu?",o:["Huế (Phú Xuân)","Thăng Long","Hoa Lư","Gia Định"]},
+{c:"ls",q:"Bài thơ \"Nam quốc sơn hà\" thường được gắn với danh tướng nào trong kháng chiến chống Tống?",o:["Lý Thường Kiệt","Trần Quốc Toản","Lê Lai","Phạm Ngũ Lão"]},
+{c:"ls",q:"Theo truyền thuyết, nhà nước Văn Lang do ai lập nên?",o:["Các Vua Hùng","An Dương Vương","Triệu Đà","Lý Nam Đế"]},
+{c:"ls",q:"Ai là người lãnh đạo cuộc khởi nghĩa Lam Sơn chống quân Minh?",o:["Lê Lợi","Nguyễn Huệ","Trần Quốc Tuấn","Đinh Bộ Lĩnh"]},
+{c:"ls",q:"Ai dẹp loạn 12 sứ quân và lập nên nhà nước Đại Cồ Việt?",o:["Đinh Bộ Lĩnh","Ngô Quyền","Lê Hoàn","Lý Công Uẩn"]},
+// VĂN HÓA
+{c:"vh",q:"Ai là tác giả của \"Truyện Kiều\"?",o:["Nguyễn Du","Hồ Xuân Hương","Nguyễn Đình Chiểu","Nguyễn Trãi"]},
+{c:"vh",q:"Tết Nguyên Đán được tính theo loại lịch nào?",o:["Âm lịch","Dương lịch","Lịch Phật giáo","Lịch Hồi giáo"]},
+{c:"vh",q:"Nghệ thuật múa rối nước gắn liền với vùng nào?",o:["Đồng bằng sông Hồng","Tây Nguyên","Đồng bằng sông Cửu Long","Tây Bắc"]},
+{c:"vh",q:"Di sản văn hóa phi vật thể đầu tiên của Việt Nam được UNESCO ghi danh (năm 2003) là gì?",o:["Nhã nhạc cung đình Huế","Ca trù","Quan họ Bắc Ninh","Hát Xoan"]},
+{c:"vh",q:"Đàn bầu là nhạc cụ truyền thống có mấy dây?",o:["1 dây","2 dây","3 dây","16 dây"]},
+{c:"vh",q:"Tết Trung thu diễn ra vào ngày nào theo âm lịch?",o:["15 tháng 8","15 tháng 1","5 tháng 5","23 tháng 12"]},
+{c:"vh",q:"Ngày Giỗ Tổ Hùng Vương là ngày nào theo âm lịch?",o:["10 tháng 3","15 tháng 7","1 tháng 1","9 tháng 9"]},
+{c:"vh",q:"Chữ Quốc ngữ hiện nay được viết dựa trên hệ chữ cái nào?",o:["Chữ La-tinh","Chữ Hán","Chữ Phạn","Chữ Kirin"]},
+{c:"vh",q:"Làng gốm Bát Tràng nổi tiếng thuộc thành phố nào?",o:["Hà Nội","Huế","Hải Phòng","Đà Nẵng"]},
+{c:"vh",q:"Con vật nào KHÔNG thuộc \"Tứ linh\" (Long, Lân, Quy, Phụng)?",o:["Hổ","Rồng","Rùa","Phượng"]},
+{c:"vh",q:"Đờn ca tài tử là loại hình âm nhạc đặc trưng của vùng nào?",o:["Nam Bộ","Bắc Bộ","Tây Bắc","Tây Nguyên"]},
+{c:"vh",q:"Ai là tác giả của truyện \"Dế Mèn phiêu lưu ký\"?",o:["Tô Hoài","Nam Cao","Kim Lân","Nguyễn Nhật Ánh"]},
+{c:"vh",q:"Ai là tác giả bài \"Tiến quân ca\" – Quốc ca Việt Nam?",o:["Văn Cao","Trịnh Công Sơn","Phạm Tuyên","Hoàng Việt"]},
+{c:"vh",q:"Di sản thế giới đầu tiên của Việt Nam được UNESCO công nhận (năm 1993) là gì?",o:["Quần thể di tích Cố đô Huế","Vịnh Hạ Long","Phố cổ Hội An","Thánh địa Mỹ Sơn"]},
+{c:"vh",q:"Tranh dân gian Đông Hồ có nguồn gốc từ tỉnh nào?",o:["Bắc Ninh","Nam Định","Thái Bình","Hưng Yên"]},
+{c:"vh",q:"Trang phục truyền thống tiêu biểu của phụ nữ Việt Nam là gì?",o:["Áo dài","Kimono","Hanbok","Sari"]},
+{c:"vh",q:"Không gian văn hóa Cồng chiêng được UNESCO ghi danh gắn với vùng nào?",o:["Tây Nguyên","Đồng bằng sông Hồng","Nam Bộ","Duyên hải Bắc Bộ"]},
+// ẨM THỰC
+{c:"at",q:"Theo truyền thuyết, ai là người đã làm ra bánh chưng, bánh giầy dâng vua Hùng?",o:["Lang Liêu","Thánh Gióng","Sơn Tinh","Chử Đồng Tử"]},
+{c:"at",q:"Trong truyền thuyết, bánh chưng hình vuông tượng trưng cho điều gì?",o:["Đất","Trời","Mặt trăng","Biển cả"]},
+{c:"at",q:"Bún bò nổi tiếng gắn với tên của vùng đất nào?",o:["Huế","Hà Nội","Cần Thơ","Nam Định"]},
+{c:"at",q:"Cao lầu là đặc sản nổi tiếng của nơi nào?",o:["Hội An","Hải Phòng","Sóc Trăng","Lạng Sơn"]},
+{c:"at",q:"Mì Quảng là món ăn đặc trưng của vùng nào?",o:["Xứ Quảng (Quảng Nam – Đà Nẵng)","Quảng Ninh","Quảng Trị","Quảng Bình"]},
+{c:"at",q:"Nước mắm truyền thống thường được làm chủ yếu từ cá gì và muối?",o:["Cá cơm","Cá chép","Cá rô","Cá tra"]},
+{c:"at",q:"Hòn đảo nào nổi tiếng với nước mắm và hồ tiêu?",o:["Phú Quốc","Cát Bà","Cù Lao Chàm","Bạch Long Vĩ"]},
+{c:"at",q:"Món bánh xèo được đặt tên theo điều gì?",o:["Tiếng xèo xèo khi đổ bột vào chảo nóng","Tên người nghĩ ra món ăn","Tên một ngôi làng","Hình dáng chiếc bánh"]},
+{c:"at",q:"Cà phê trứng là thức uống nổi tiếng bắt nguồn từ thành phố nào?",o:["Hà Nội","Buôn Ma Thuột","Đà Lạt","Vũng Tàu"]},
+{c:"at",q:"Chả cá Lã Vọng là món ăn nổi tiếng của thành phố nào?",o:["Hà Nội","Huế","Đà Nẵng","Nha Trang"]},
+{c:"at",q:"Món cơm tấm sườn bì chả gắn liền nhất với thành phố nào?",o:["Sài Gòn (TP. Hồ Chí Minh)","Hà Nội","Hải Phòng","Huế"]},
+{c:"at",q:"Ổ bánh mì Việt Nam vỏ giòn chịu ảnh hưởng từ ẩm thực nước nào?",o:["Pháp","Nhật Bản","Ấn Độ","Mỹ"]},
+{c:"at",q:"Loại trái cây nào thường được gọi là \"vua của các loại trái cây\" với mùi rất đặc trưng?",o:["Sầu riêng","Măng cụt","Chôm chôm","Thanh long"]},
+{c:"at",q:"Bánh tét – loại bánh hình trụ dịp Tết – phổ biến nhất ở miền nào?",o:["Miền Nam","Miền Bắc","Tây Bắc","Việt Bắc"]},
+{c:"at",q:"Gỏi cuốn được cuốn bằng loại bánh nào?",o:["Bánh tráng","Bánh đa cua","Bánh cuốn","Bánh phở"]},
+{c:"at",q:"Món nem rán (miền Bắc) được người miền Nam gọi là gì?",o:["Chả giò","Chả lụa","Nem chua","Bò bía"]},
+{c:"at",q:"Bún chả – món ăn từng được Tổng thống Mỹ Obama thưởng thức năm 2016 – nổi tiếng ở đâu?",o:["Hà Nội","Huế","Cần Thơ","Đà Lạt"]},
+{c:"at",q:"Nguyên liệu chính để làm sợi phở là gì?",o:["Gạo","Lúa mì","Khoai mì (sắn)","Đậu xanh"]}
+];
+const CATS = [
+  {id:"all",name:"🌏 Tất cả"},
+  {id:"dl",name:"🗺️ Địa lý"},
+  {id:"ls",name:"📜 Lịch sử"},
+  {id:"vh",name:"🎎 Văn hóa"},
+  {id:"at",name:"🍜 Ẩm thực"}
+];
+const CATNAME = {dl:"Địa lý",ls:"Lịch sử",vh:"Văn hóa",at:"Ẩm thực"};
+const NUMS = [10,15,20];
+const TIME = 20;
+
+// ---------- storage ----------
+const store = {
+  get(k,d){ try{ const v = localStorage.getItem(k); return v==null?d:JSON.parse(v); }catch(e){ return d; } },
+  set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+// ---------- sound ----------
+let muted = store.get("dvvn_muted", false), actx = null;
+function beep(freq, dur, type, vol){
+  if(muted) return;
+  try{
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = type||"sine"; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol||0.12, actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + dur);
+    o.connect(g); g.connect(actx.destination); o.start(); o.stop(actx.currentTime + dur);
+  }catch(e){}
+}
+const sfx = {
+  good(){ beep(660,.12,"triangle"); setTimeout(()=>beep(880,.16,"triangle"),90); },
+  bad(){ beep(200,.3,"sawtooth",.08); },
+  tick(){ beep(1000,.04,"square",.04); },
+  win(){ [523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,.2,"triangle"),i*120)); }
+};
+const $ = id => document.getElementById(id);
+const soundBtn = $("soundBtn");
+function renderSound(){ soundBtn.textContent = muted ? "🔇" : "🔊"; }
+soundBtn.onclick = ()=>{ muted=!muted; store.set("dvvn_muted",muted); renderSound(); };
+renderSound();
+
+// ---------- state ----------
+let cat = "all", num = 10;
+let list = [], idx = 0, score = 0, streak = 0, bestStreak = 0;
+let used50 = false, usedSkip = false, answered = false;
+let timer = null, deadline = 0, lastTick = 0;
+let log = [];
+let curOpts = [];
+
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function show(id){ ["start","quiz","result"].forEach(s=>$(s).classList.toggle("hidden", s!==id)); window.scrollTo(0,0); }
+
+function chips(){
+  $("catChips").innerHTML = "";
+  CATS.forEach(c=>{
+    const b = document.createElement("button");
+    b.className = "chip" + (c.id===cat?" on":""); b.textContent = c.name;
+    b.onclick = ()=>{ cat=c.id; chips(); };
+    $("catChips").appendChild(b);
+  });
+  $("numChips").innerHTML = "";
+  NUMS.forEach(n=>{
+    const b = document.createElement("button");
+    b.className = "chip" + (n===num?" on":""); b.textContent = n + " câu";
+    b.onclick = ()=>{ num=n; chips(); };
+    $("numChips").appendChild(b);
+  });
+  const best = store.get("dvvn_best_"+cat+"_"+num, 0);
+  const cname = CATS.find(c=>c.id===cat).name;
+  $("bestLine").textContent = best ? `🏆 Kỷ lục (${cname}, ${num} câu): ${best} điểm` : `Chưa có kỷ lục cho ${cname}, ${num} câu – hãy lập kỷ lục đầu tiên!`;
+}
+
+function start(){
+  const pool = shuffle(Q.filter(x=> cat==="all" || x.c===cat).slice());
+  list = pool.slice(0, Math.min(num, pool.length));
+  idx = 0; score = 0; streak = 0; bestStreak = 0; used50 = false; usedSkip = false; log = [];
+  $("qTotal").textContent = list.length;
+  $("fiftyBtn").disabled = false; $("skipBtn").disabled = false;
+  updateHud();
+  show("quiz");
+  loadQ();
+}
+
+function updateHud(){
+  $("score").textContent = score;
+  $("streak").textContent = streak;
+}
+
+function loadQ(){
+  answered = false;
+  const item = list[idx];
+  $("qNum").textContent = idx+1;
+  $("qCat").textContent = CATNAME[item.c];
+  $("qText").textContent = item.q;
+  $("feedback").textContent = ""; $("feedback").className = "feedback";
+  $("nextBtn").classList.add("hidden");
+  curOpts = shuffle(item.o.map((t,i)=>({t, ok:i===0})));
+  const box = $("opts"); box.innerHTML = "";
+  curOpts.forEach((o,i)=>{
+    const b = document.createElement("button");
+    b.className = "opt";
+    b.innerHTML = `<span class="k">${"ABCD"[i]}</span><span></span>`;
+    b.lastChild.textContent = o.t;
+    b.onclick = ()=>choose(i);
+    box.appendChild(b);
+  });
+  $("fiftyBtn").disabled = used50; $("skipBtn").disabled = usedSkip;
+  deadline = performance.now() + TIME*1000; lastTick = TIME;
+  clearInterval(timer);
+  timer = setInterval(tick, 100);
+  tick();
+}
+
+function tick(){
+  const left = Math.max(0, (deadline - performance.now())/1000);
+  $("timefill").style.width = (left/TIME*100) + "%";
+  $("timebar").classList.toggle("low", left <= 5);
+  const s = Math.ceil(left);
+  $("timeLeft").textContent = s;
+  if(s < lastTick){ lastTick = s; if(s<=5 && s>0) sfx.tick(); }
+  if(left <= 0){ clearInterval(timer); timeUp(); }
+}
+
+function reveal(chosen){
+  const btns = $("opts").children;
+  curOpts.forEach((o,i)=>{
+    btns[i].disabled = true;
+    if(o.ok) btns[i].classList.add("correct");
+    else if(i===chosen) btns[i].classList.add("wrong");
+  });
+  $("fiftyBtn").disabled = true; $("skipBtn").disabled = true;
+  $("nextBtn").classList.remove("hidden");
+  $("nextBtn").textContent = idx < list.length-1 ? "Câu tiếp ▶" : "Xem kết quả 🏁";
+}
+
+function choose(i){
+  if(answered) return;
+  answered = true; clearInterval(timer);
+  const left = Math.max(0,(deadline - performance.now())/1000);
+  const item = list[idx], o = curOpts[i];
+  const correctText = curOpts.find(x=>x.ok).t;
+  if(o.ok){
+    streak++; bestStreak = Math.max(bestStreak, streak);
+    const timeBonus = Math.round(left*5);
+    const streakBonus = streak>=3 ? Math.min(150, (streak-2)*25) : 0;
+    const gained = 100 + timeBonus + streakBonus;
+    score += gained;
+    $("feedback").textContent = `✅ Chính xác! +${gained}` + (streakBonus?` (🔥 thưởng chuỗi +${streakBonus})`:"");
+    $("feedback").className = "feedback good";
+    $("streakPill").classList.remove("streak-pop"); void $("streakPill").offsetWidth; $("streakPill").classList.add("streak-pop");
+    sfx.good();
+    log.push({q:item.q, cat:item.c, status:"ok", yours:o.t, right:correctText});
+  } else {
+    streak = 0;
+    $("feedback").textContent = "❌ Chưa đúng! Đáp án: " + correctText;
+    $("feedback").className = "feedback bad";
+    sfx.bad();
+    log.push({q:item.q, cat:item.c, status:"no", yours:o.t, right:correctText});
+  }
+  updateHud(); reveal(i);
+}
+
+function timeUp(){
+  if(answered) return;
+  answered = true; streak = 0;
+  const item = list[idx]; const correctText = curOpts.find(x=>x.ok).t;
+  $("feedback").textContent = "⏰ Hết giờ! Đáp án: " + correctText;
+  $("feedback").className = "feedback bad";
+  sfx.bad();
+  log.push({q:item.q, cat:item.c, status:"no", yours:null, right:correctText});
+  updateHud(); reveal(-1);
+}
+
+function fifty(){
+  if(used50 || answered) return;
+  used50 = true; $("fiftyBtn").disabled = true;
+  const btns = $("opts").children;
+  const wrong = shuffle(curOpts.map((o,i)=>o.ok?-1:i).filter(i=>i>=0)).slice(0,2);
+  wrong.forEach(i=>{ btns[i].classList.add("gone"); btns[i].disabled = true; });
+  beep(520,.1,"triangle");
+}
+function skip(){
+  if(usedSkip || answered) return;
+  usedSkip = true; answered = true; clearInterval(timer);
+  const item = list[idx];
+  log.push({q:item.q, cat:item.c, status:"sk", yours:null, right:curOpts.find(x=>x.ok).t});
+  beep(440,.1,"triangle");
+  next();
+}
+function next(){
+  if(!answered) return;
+  idx++;
+  if(idx >= list.length) finish(); else loadQ();
+}
+
+function finish(){
+  clearInterval(timer);
+  const ok = log.filter(l=>l.status==="ok").length;
+  const no = log.filter(l=>l.status==="no").length;
+  const sk = log.filter(l=>l.status==="sk").length;
+  $("finalScore").textContent = score + " điểm";
+  $("sCorrect").textContent = ok + "/" + list.length;
+  $("sWrong").textContent = no; $("sSkip").textContent = sk; $("sStreak").textContent = bestStreak;
+  const pct = ok / list.length;
+  $("verdict").textContent = pct>=0.9 ? "Xuất sắc! Bạn là một chuyên gia về Việt Nam 🏅"
+    : pct>=0.7 ? "Rất tốt! Kiến thức của bạn thật vững vàng 👏"
+    : pct>=0.5 ? "Khá lắm! Ôn lại một chút là thành cao thủ 💪"
+    : "Cố lên! Xem lại đáp án bên dưới để học thêm nhé 📚";
+  const key = "dvvn_best_"+cat+"_"+num;
+  const best = store.get(key, 0);
+  const isBest = score > best;
+  if(isBest) store.set(key, score);
+  $("newBest").classList.toggle("hidden", !isBest || score===0);
+  const ul = $("review"); ul.innerHTML = "";
+  log.forEach((l,i)=>{
+    const li = document.createElement("li");
+    li.className = l.status;
+    const q = document.createElement("div"); q.className="q"; q.textContent = (i+1)+". "+l.q;
+    const a = document.createElement("div"); a.className="a";
+    const em = document.createElement("em"); em.textContent = l.right;
+    a.append("Đáp án đúng: ", em);
+    li.append(q,a);
+    const n = document.createElement("div"); n.className="note";
+    if(l.status==="ok") n.textContent = "✅ Bạn trả lời đúng";
+    else if(l.status==="sk") n.textContent = "⏭️ Bạn đã bỏ qua câu này";
+    else if(l.yours==null) n.textContent = "⏰ Hết giờ – chưa chọn đáp án";
+    else { const s=document.createElement("s"); s.textContent=l.yours; n.append("❌ Bạn chọn: ", s); }
+    li.appendChild(n);
+    ul.appendChild(li);
+  });
+  show("result");
+  sfx.win();
+}
+
+$("startBtn").onclick = start;
+$("againBtn").onclick = start;
+$("menuBtn").onclick = ()=>{ chips(); show("start"); };
+$("fiftyBtn").onclick = fifty;
+$("skipBtn").onclick = skip;
+$("nextBtn").onclick = next;
+
+document.addEventListener("keydown", e=>{
+  if(e.ctrlKey||e.metaKey||e.altKey) return;
+  if($("quiz").classList.contains("hidden")){
+    if(e.key==="Enter" && !$("start").classList.contains("hidden") && document.activeElement.tagName!=="BUTTON"){ start(); }
+    return;
+  }
+  const k = e.key.toLowerCase();
+  const map = {"1":0,"2":1,"3":2,"4":3,"a":0,"b":1,"c":2,"d":3};
+  if(k in map && !answered){
+    const b = $("opts").children[map[k]];
+    if(b && !b.disabled) choose(map[k]);
+    e.preventDefault();
+  } else if(e.key==="Enter" && answered){
+    e.preventDefault(); next();
+  }
+});
+
+chips();
+show("start");
+// expose for testing
+window.__quiz = {count:Q.length};
+})();
+</script>
+</body>
+</html>

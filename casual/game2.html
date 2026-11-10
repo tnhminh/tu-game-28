@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
+<title>Gõ Phím Thần Tốc</title>
+<style>
+:root{
+  --bg1:#fff6e9; --bg2:#ffe9d6;
+  --ink:#23303d; --muted:#667385;
+  --primary:#0f9d8a; --primary-d:#0b7c6d;
+  --accent:#ff6b4a; --sun:#ffc93c;
+  --card:#ffffff; --line:#eadfd2;
+  --good:#22a45d; --bad:#e5484d;
+  --shadow:0 8px 24px rgba(35,48,61,.12);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  color:var(--ink); background:linear-gradient(160deg,var(--bg1),var(--bg2));
+  min-height:100vh; overflow-x:hidden; -webkit-tap-highlight-color:transparent;
+}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;max-width:860px;margin:0 auto}
+.back{color:var(--primary-d);text-decoration:none;font-size:14px;font-weight:600;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.7)}
+.back:hover{background:#fff}
+.icon-btn{border:0;background:rgba(255,255,255,.7);border-radius:999px;padding:6px 10px;font-size:16px;cursor:pointer}
+main{max-width:860px;margin:0 auto;padding:0 16px 24px}
+.card{background:var(--card);border-radius:20px;box-shadow:var(--shadow);padding:22px}
+h1{margin:4px 0 6px;font-size:clamp(26px,6vw,38px);color:var(--primary-d);text-align:center}
+.sub{color:var(--muted);text-align:center;margin:0 0 18px}
+h2{font-size:17px;margin:16px 0 8px}
+.howto{background:#f4fbf9;border:1px dashed #9fd8cf;border-radius:14px;padding:12px 16px 12px 34px;margin:0}
+.howto li{margin:4px 0}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:2px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font-size:15px;cursor:pointer;font-weight:600;color:var(--ink)}
+.chip.on{border-color:var(--primary);background:var(--primary);color:#fff}
+.chip:disabled{opacity:.4;cursor:not-allowed}
+.btn{display:inline-block;border:0;border-radius:14px;padding:13px 22px;font-size:17px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff;box-shadow:0 4px 0 #d24f30;transition:transform .08s}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #d24f30}
+.btn.ghost{background:#fff;color:var(--ink);border:2px solid var(--line);box-shadow:none}
+.center{text-align:center}
+.best{margin-top:14px;color:var(--muted);font-size:14px;text-align:center}
+.hidden{display:none!important}
+.note{font-size:13px;color:var(--muted);margin-top:6px}
+/* game */
+.hud{display:flex;justify-content:space-between;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.pill{background:#fff;border-radius:999px;padding:6px 12px;box-shadow:var(--shadow);font-size:14px;font-weight:700;white-space:nowrap}
+.pill b{color:var(--accent)}
+.arena{position:relative;height:min(58vh,460px);min-height:240px;border-radius:20px;overflow:hidden;
+  background:linear-gradient(180deg,#1f3b57 0%,#2f5d7c 60%,#3f7b8f 100%);box-shadow:var(--shadow)}
+.arena::after{content:"";position:absolute;left:0;right:0;bottom:0;height:6px;background:repeating-linear-gradient(90deg,var(--bad) 0 14px,#ffb3a6 14px 28px);opacity:.85}
+.star{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;opacity:.5}
+.word{position:absolute;top:0;left:0;white-space:nowrap;font-size:clamp(16px,3.8vw,21px);font-weight:700;color:#fff;
+  padding:4px 10px;border-radius:10px;background:rgba(255,255,255,.14);border:2px solid rgba(255,255,255,.25);will-change:transform;
+  text-shadow:0 1px 2px rgba(0,0,0,.4)}
+.word .done{color:var(--sun)}
+.word.target{background:rgba(255,201,60,.22);border-color:var(--sun)}
+.word.danger{border-color:#ff9a87}
+.boom{position:absolute;pointer-events:none;font-size:26px;animation:boom .5s ease-out forwards}
+@keyframes boom{from{opacity:1;transform:scale(.6)}to{opacity:0;transform:scale(1.8) translateY(-14px)}}
+.levelup{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);color:var(--sun);font-size:30px;font-weight:900;text-shadow:0 2px 6px rgba(0,0,0,.5);animation:lv 1.4s forwards;pointer-events:none;white-space:nowrap}
+@keyframes lv{0%{opacity:0;transform:translate(-50%,-30%)}20%{opacity:1;transform:translate(-50%,-50%)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-70%)}}
+.typebox{display:flex;gap:8px;margin-top:10px}
+#typing{flex:1;min-width:0;font-size:20px;padding:12px 14px;border-radius:14px;border:3px solid var(--primary);outline:none;background:#fff;color:var(--ink)}
+#typing.err{border-color:var(--bad);animation:shake .25s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.small-btn{border:0;border-radius:12px;padding:0 14px;font-weight:700;font-size:15px;cursor:pointer;background:#fff;box-shadow:var(--shadow);color:var(--ink)}
+.hint{font-size:13px;color:var(--muted);margin-top:6px;text-align:center}
+.paused{position:absolute;inset:0;background:rgba(20,35,50,.65);display:grid;place-items:center;color:#fff;font-size:22px;font-weight:800;text-align:center;padding:16px;cursor:pointer}
+/* result */
+.big{font-size:44px;font-weight:900;color:var(--accent);text-align:center;margin:4px 0}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0}
+@media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{background:#fbf6f0;border-radius:12px;padding:10px;text-align:center}
+.stat b{display:block;font-size:22px}
+.stat span{font-size:13px;color:var(--muted)}
+.actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:16px 0 4px}
+.newbest{color:var(--good);font-weight:800;text-align:center}
+.missed{color:var(--muted);font-size:14px;text-align:center}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="back" href="../index.html">← Danh sách game</a>
+  <button class="icon-btn" id="soundBtn" aria-label="Bật/tắt âm thanh">🔊</button>
+</div>
+<main>
+  <section id="start" class="card">
+    <h1>⌨️ Gõ Phím Thần Tốc</h1>
+    <p class="sub">Gõ thật nhanh để phá các từ trước khi chúng chạm đáy!</p>
+    <ol class="howto">
+      <li>Các từ rơi từ trên xuống. Gõ đúng một từ vào ô nhập để phá hủy nó.</li>
+      <li>Từ chạm vạch đỏ dưới đáy sẽ mất 1 ❤️. Hết 5 tim là thua.</li>
+      <li>Cứ phá 10 từ sẽ lên cấp – từ rơi nhanh hơn và dài hơn.</li>
+      <li>Gõ tiếng Việt có dấu bằng bộ gõ của máy (Telex/VNI) hoặc gõ kiểu Telex thô (ví dụ <b>vieetj</b> = <b>việt</b>) đều được.</li>
+      <li>Nhấn <b>Enter</b>/<b>Space</b> để xóa ô nhập, <b>Esc</b> để tạm dừng.</li>
+    </ol>
+    <h2>Ngôn ngữ</h2>
+    <div class="chips" id="langChips"></div>
+    <h2>Chế độ dấu</h2>
+    <div class="chips" id="markChips"></div>
+    <div class="note" id="markNote"></div>
+    <div class="center" style="margin-top:22px"><button class="btn" id="startBtn">Bắt đầu ▶</button></div>
+    <div class="best" id="bestLine"></div>
+  </section>
+
+  <section id="game" class="hidden">
+    <div class="hud">
+      <span class="pill">⭐ <b id="score">0</b></span>
+      <span class="pill">Cấp <b id="level">1</b></span>
+      <span class="pill">⚡ <b id="wpm">0</b> WPM</span>
+      <span class="pill">🎯 <b id="acc">100</b>%</span>
+      <span class="pill" id="lives">❤️❤️❤️❤️❤️</span>
+    </div>
+    <div class="arena" id="arena">
+      <div class="paused hidden" id="pausedBox">⏸️ Tạm dừng<br><small style="font-size:15px;font-weight:600">Chạm hoặc nhấn Esc để tiếp tục</small></div>
+    </div>
+    <div class="typebox">
+      <input id="typing" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" placeholder="Gõ từ ở đây…" aria-label="Ô nhập từ">
+      <button class="small-btn" id="pauseBtn" aria-label="Tạm dừng">⏸️</button>
+    </div>
+    <div class="hint" id="hint">Từ đang nhắm được tô vàng.</div>
+  </section>
+
+  <section id="result" class="card hidden">
+    <h1>Kết thúc!</h1>
+    <div class="big" id="finalScore">0</div>
+    <div class="newbest hidden" id="newBest">🏆 Kỷ lục mới!</div>
+    <div class="stats">
+      <div class="stat"><b id="rWpm">0</b><span>WPM</span></div>
+      <div class="stat"><b id="rAcc">0%</b><span>Độ chính xác</span></div>
+      <div class="stat"><b id="rWords">0</b><span>Từ đã phá</span></div>
+      <div class="stat"><b id="rLevel">1</b><span>Cấp đạt được</span></div>
+    </div>
+    <p class="missed" id="missedLine"></p>
+    <div class="actions">
+      <button class="btn" id="againBtn">Chơi lại ↻</button>
+      <button class="btn ghost" id="menuBtn">Đổi chế độ</button>
+    </div>
+  </section>
+</main>
+<script>
+(function(){
+"use strict";
+// ---------------- word lists ----------------
+const VI = {
+  1:["mèo","chó","cá","gà","hoa","lá","mưa","nắng","nhà","sông","núi","biển","trăng","sao","bàn","ghế","sách","vở","bút","cây","trà","phở","bún","cơm","mẹ","cha","bạn","vui","xanh","đỏ","tím","gió","mây","đường","bánh","kẹo","quả","táo","cam","chuối"],
+  2:["con mèo","bông hoa","cơn mưa","ánh nắng","ngôi nhà","dòng sông","ngọn núi","bầu trời","học sinh","cô giáo","bóng đá","âm nhạc","mùa xuân","mùa hè","mùa thu","mùa đông","quê hương","gia đình","bạn bè","sân trường","cà phê","bánh mì","nước mắm","áo dài","nón lá","trung thu","đèn lồng","hạnh phúc","yêu thương","chăm chỉ"],
+  3:["Việt Nam","Hà Nội","Sài Gòn","Đà Nẵng","Hạ Long","Phú Quốc","Đà Lạt","Hội An","thành phố","bánh chưng","múa rối nước","phong cảnh","khám phá","thiên nhiên","truyền thống","lịch sử","văn hóa","sáng tạo","kiên nhẫn","tự hào","thần tốc","bàn phím","tiếng Việt","quyển sách","điện thoại","máy tính","nghỉ ngơi","nhiệt tình","rực rỡ","thư viện"]
+};
+const EN = {
+  1:["cat","dog","sun","sky","tree","book","fish","bird","rain","star","milk","cake","blue","red","fast","jump","play","home","moon","snow","ship","frog","lamp","kite","sand","road","bell","rice","tea","door"],
+  2:["apple","house","river","green","happy","music","tiger","water","light","pizza","smile","dance","beach","cloud","train","night","dream","ocean","plant","sweet","quick","brave","magic","story","chair","clock","bread","grape","heart","world"],
+  3:["keyboard","computer","elephant","mountain","sunshine","festival","language","adventure","butterfly","chocolate","dinosaur","umbrella","vacation","telephone","beautiful","waterfall","notebook","treasure","friendly","champion","lantern","pineapple","universe","painting","weekend","library","rainbow","kingdom","journey","victory"]
+};
+
+// ---------------- helpers ----------------
+const store = {
+  get(k,d){ try{ const v=localStorage.getItem(k); return v==null?d:JSON.parse(v); }catch(e){ return d; } },
+  set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+const $ = id => document.getElementById(id);
+const nfc = s => (s||"").normalize("NFC");
+// strip Vietnamese diacritics (incl. đ) and lowercase
+function fold(s){
+  return nfc(s).normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D").toLowerCase();
+}
+// Build the raw Telex keystrokes for a word: base letters + modifiers inline,
+// tone key returned separately so it may appear anywhere after its vowel.
+const TONE_KEY = {"́":"s","̀":"f","̉":"r","̃":"x","̣":"j"};
+function telexParts(word){
+  // returns array of syllables: {base:"vieet", tone:"j"} for each space-separated token
+  return nfc(word).toLowerCase().split(" ").map(tok=>{
+    let tone = "";
+    let out = "";
+    for(const ch of tok.normalize("NFD")){
+      if(TONE_KEY[ch]){ tone = TONE_KEY[ch]; continue; }
+      if(ch==="̂"){ out += out.slice(-1); continue; }   // â ê ô
+      if(ch==="̆"){ out += "w"; continue; }             // ă
+      if(ch==="̛"){ out += "w"; continue; }             // ơ ư
+      if(ch==="đ"){ out += "dd"; continue; }
+      out += ch;
+    }
+    // collapse "uwow" (ươ) – Telex also accepts "uow"; keep canonical "uwow"
+    return {base:out, tone};
+  });
+}
+// does typed raw text equal a Telex spelling of word? (tone key anywhere after first vowel in syllable)
+function telexEquals(typed, word){
+  const parts = telexParts(word);
+  const toks = typed.toLowerCase().split(" ");
+  if(toks.length !== parts.length) return false;
+  return parts.every((p,i)=>{
+    const t = toks[i];
+    const variants = [p.base];
+    if(p.base.includes("uwow")) variants.push(p.base.replace("uwow","uow"));
+    return variants.some(base=>{
+      if(!p.tone) return t === base;
+      if(t.length !== base.length+1) return false;
+      for(let k=0;k<t.length;k++){
+        if(t[k]===p.tone && t.slice(0,k)+t.slice(k+1)===base) return true;
+      }
+      return false;
+    });
+  });
+}
+// is typed a plausible prefix of word (used for targeting & highlighting)? returns matched char count or -1
+function prefixLen(typed, w, marks){
+  if(!typed) return 0;
+  const T = nfc(typed);
+  if(marks){
+    if(nfc(w.text).toLowerCase().startsWith(T.toLowerCase())) return T.length;
+  }
+  // diacritic-insensitive (works for IME intermediate states and "không dấu" mode)
+  const ft = fold(T), fw = fold(w.text);
+  if(fw.startsWith(ft)) return ft.length;
+  if(marks){
+    // raw telex prefix: drop any tone letters and modifier keys and compare loosely
+    const raw = T.toLowerCase();
+    const tel = w.telex;
+    let i=0,j=0;
+    while(i<raw.length && j<tel.length){
+      if(raw[i]===tel[j]){ i++; j++; }
+      else if("sfrxjw".includes(raw[i])){ i++; }
+      else return -1;
+    }
+    if(i===raw.length){
+      // map telex progress back to visible chars approximately
+      const visible = fold(w.text);
+      let count=0, k=0;
+      const plain = tel.slice(0,j).replace(/(.)\1/g,"$1").replace(/w/g,"").replace(/dd/g,"d");
+      while(k<plain.length && count<visible.length){ if(plain[k]===visible[count]) count++; k++; }
+      return count;
+    }
+  }
+  return -1;
+}
+function isMatch(typed, w, marks){
+  const T = nfc(typed).trim();
+  if(!T) return false;
+  if(marks){
+    if(T.toLowerCase() === nfc(w.text).toLowerCase()) return true;
+    return telexEquals(T, w.text);
+  }
+  return fold(T) === fold(w.text);
+}
+
+// ---------------- sound ----------------
+let muted = store.get("gptt_muted", false), actx=null;
+function beep(f,d,type,v){
+  if(muted) return;
+  try{
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    const o=actx.createOscillator(), g=actx.createGain();
+    o.type=type||"sine"; o.frequency.value=f;
+    g.gain.setValueAtTime(v||.1,actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.0001,actx.currentTime+d);
+    o.connect(g); g.connect(actx.destination); o.start(); o.stop(actx.currentTime+d);
+  }catch(e){}
+}
+function renderSound(){ $("soundBtn").textContent = muted?"🔇":"🔊"; }
+$("soundBtn").onclick=()=>{ muted=!muted; store.set("gptt_muted",muted); renderSound(); };
+renderSound();
+
+// ---------------- settings ----------------
+let lang = store.get("gptt_lang","vi"), marks = store.get("gptt_marks", true);
+function settingsUI(){
+  const lc = $("langChips"); lc.innerHTML="";
+  [["vi","🇻🇳 Tiếng Việt"],["en","🇬🇧 Tiếng Anh"]].forEach(([id,name])=>{
+    const b=document.createElement("button"); b.className="chip"+(lang===id?" on":""); b.textContent=name;
+    b.onclick=()=>{ lang=id; store.set("gptt_lang",lang); settingsUI(); }; lc.appendChild(b);
+  });
+  const mc = $("markChips"); mc.innerHTML="";
+  [[true,"Có dấu"],[false,"Không dấu"]].forEach(([v,name])=>{
+    const b=document.createElement("button"); b.className="chip"+(marks===v && lang==="vi"?" on":""); b.textContent=name;
+    b.disabled = lang!=="vi";
+    b.onclick=()=>{ marks=v; store.set("gptt_marks",marks); settingsUI(); }; mc.appendChild(b);
+  });
+  $("markNote").textContent = lang!=="vi" ? "Chế độ dấu chỉ áp dụng cho tiếng Việt."
+    : marks ? "Có dấu: phải gõ đúng dấu (dùng bộ gõ Telex/VNI, hoặc gõ Telex thô: \"hoaf\" = \"hòa\")."
+    : "Không dấu: từ hiển thị không dấu, chỉ cần gõ chữ cái (gõ có dấu cũng được chấp nhận).";
+  const best = store.get(bestKey(), null);
+  $("bestLine").textContent = best ? `🏆 Kỷ lục chế độ này: ${best.score} điểm · ${best.wpm} WPM` : "Chưa có kỷ lục cho chế độ này.";
+}
+function bestKey(){ return "gptt_best_"+lang+(lang==="vi"?(marks?"_dau":"_khongdau"):""); }
+
+// ---------------- game state ----------------
+const arena = $("arena"), input = $("typing");
+let words=[], running=false, paused=false, raf=0, lastT=0;
+let score=0, level=1, lives=5, destroyed=0, charsDone=0, wrongSubmits=0, missed=0;
+let spawnTimer=0, playTime=0, composing=false, targetId=null, uid=0;
+
+function makeStars(){
+  arena.querySelectorAll(".star").forEach(s=>s.remove());
+  for(let i=0;i<40;i++){
+    const s=document.createElement("div"); s.className="star";
+    s.style.left=Math.random()*100+"%"; s.style.top=Math.random()*100+"%";
+    s.style.opacity=(.2+Math.random()*.6).toFixed(2);
+    arena.appendChild(s);
+  }
+}
+function pool(){
+  const src = lang==="vi"?VI:EN;
+  const tier = level<=2?[1,1,2]:level<=4?[1,2,2,3]:level<=6?[2,3,3]:[2,3,3,3];
+  return src[tier[Math.floor(Math.random()*tier.length)]];
+}
+function spawn(){
+  const list = pool();
+  let text, tries=0;
+  do{ text = list[Math.floor(Math.random()*list.length)]; tries++; }
+  while(tries<20 && words.some(w=>fold(w.text)===fold(text) || fold(w.text)[0]===fold(text)[0]));
+  if(lang==="vi" && !marks) text = fold(text);
+  const el=document.createElement("div"); el.className="word";
+  el.innerHTML='<span class="done"></span><span class="rest"></span>';
+  el.lastChild.textContent=text;
+  arena.appendChild(el);
+  const aw=arena.clientWidth, ew=el.offsetWidth;
+  const x = 6 + Math.random()*Math.max(0, aw-ew-12);
+  const tel = telexParts(text).map(p=>p.base).join(" ");
+  const w={id:++uid, text, el, x, y:-36, telex:tel, speed: speedFor(), w:ew};
+  el.style.transform=`translate(${x}px,${w.y}px)`;
+  words.push(w);
+}
+function speedFor(){ // px per second, scaled by arena height
+  const h = arena.clientHeight;
+  const base = h/14;               // ~14s to fall at level 1
+  return base*(1+ (level-1)*0.16)*(0.85+Math.random()*0.3);
+}
+function spawnInterval(){ return Math.max(0.75, 2.6 - (level-1)*0.22); }
+
+function start(){
+  words.forEach(w=>w.el.remove()); words=[];
+  arena.querySelectorAll(".boom,.levelup").forEach(e=>e.remove());
+  score=0; level=1; lives=5; destroyed=0; charsDone=0; wrongSubmits=0; missed=0;
+  spawnTimer=0.4; playTime=0; targetId=null; paused=false;
+  $("pausedBox").classList.add("hidden");
+  input.value="";
+  show("game");
+  makeStars();
+  hud();
+  running=true; lastT=performance.now();
+  cancelAnimationFrame(raf); raf=requestAnimationFrame(loop);
+  setTimeout(()=>input.focus(),50);
+}
+function show(id){ ["start","game","result"].forEach(s=>$(s).classList.toggle("hidden",s!==id)); }
+function hud(){
+  $("score").textContent=score; $("level").textContent=level;
+  $("lives").textContent = window.innerWidth<480 ? "❤️ "+lives : "❤️".repeat(lives)+"🤍".repeat(5-lives);
+  const mins = playTime/60;
+  $("wpm").textContent = mins>0.05 ? Math.round((charsDone/5)/mins) : 0;
+  $("acc").textContent = accuracy();
+}
+function accuracy(){
+  const tot = destroyed + wrongSubmits;
+  return tot? Math.round(destroyed/tot*100) : 100;
+}
+
+function loop(t){
+  if(!running) return;
+  const dt = Math.min(0.05,(t-lastT)/1000); lastT=t;
+  if(!paused){
+    playTime+=dt;
+    spawnTimer-=dt;
+    if(spawnTimer<=0){ spawn(); spawnTimer=spawnInterval(); }
+    const floor = arena.clientHeight - 6;
+    for(let i=words.length-1;i>=0;i--){
+      const w=words[i];
+      w.y += w.speed*dt;
+      w.el.style.transform=`translate(${w.x}px,${w.y}px)`;
+      w.el.classList.toggle("danger", w.y > floor*0.7);
+      if(w.y + w.el.offsetHeight >= floor){
+        words.splice(i,1); w.el.remove(); lives--; missed++;
+        beep(160,.3,"sawtooth",.08);
+        arena.animate([{background:"rgba(229,72,77,.5)"},{background:""}],{duration:300});
+        if(targetId===w.id) targetId=null;
+        if(lives<=0){ hud(); return gameOver(); }
+      }
+    }
+    if(Math.floor(playTime*4)!==Math.floor((playTime-dt)*4)) hud();
+  }
+  raf=requestAnimationFrame(loop);
+}
+
+// --- input handling: always read the whole field value (IME/Telex safe) ---
+function evaluate(){
+  if(!running || paused) return;
+  const v = input.value;
+  if(!v.trim()){ highlight(null,0); input.classList.remove("err"); return; }
+  // 1) exact match? (only when IME composition finished)
+  if(!composing){
+    const hit = words.find(w=>isMatch(v,w,marks && lang==="vi"));
+    if(hit){ destroy(hit); input.value=""; highlight(null,0); return; }
+  }
+  // 2) find best prefix target
+  let best=null, bestLen=-1;
+  for(const w of words){
+    const n = prefixLen(v.trim(), w, marks && lang==="vi");
+    if(n>bestLen || (n===bestLen && best && w.y>best.y)){ best=w; bestLen=n; }
+  }
+  if(best && bestLen>=0){ highlight(best,bestLen); input.classList.remove("err"); }
+  else { highlight(null,0); input.classList.add("err"); }
+}
+function highlight(w,n){
+  for(const x of words){
+    const on = w && x.id===w.id;
+    x.el.classList.toggle("target", !!on);
+    const shown = x.text;
+    // split by folded char positions (same length as original for NFC Vietnamese)
+    const k = on ? Math.min(n, shown.length) : 0;
+    x.el.firstChild.textContent = shown.slice(0,k);
+    x.el.lastChild.textContent = shown.slice(k);
+  }
+  targetId = w?w.id:null;
+}
+function destroy(w){
+  words=words.filter(x=>x!==w);
+  const b=document.createElement("div"); b.className="boom"; b.textContent="💥";
+  b.style.left=(w.x+w.el.offsetWidth/2-14)+"px"; b.style.top=(w.y-4)+"px";
+  arena.appendChild(b); setTimeout(()=>b.remove(),520);
+  w.el.remove();
+  destroyed++; charsDone += w.text.length + 1;
+  const gained = 10*w.text.length*level;
+  score += gained;
+  beep(520+Math.random()*200,.09,"triangle"); setTimeout(()=>beep(880,.08,"triangle",.07),60);
+  if(destroyed%10===0){
+    level++;
+    const lv=document.createElement("div"); lv.className="levelup"; lv.textContent="⬆️ Cấp "+level+"!";
+    arena.appendChild(lv); setTimeout(()=>lv.remove(),1450);
+    [523,659,784].forEach((f,i)=>setTimeout(()=>beep(f,.15,"triangle"),i*90));
+  }
+  hud();
+}
+function submit(){
+  // Enter/Space with non-matching text = mistake; clear the field
+  const v=input.value;
+  if(!v.trim()) { input.value=""; return; }
+  const hit = words.find(w=>isMatch(v,w,marks && lang==="vi"));
+  if(hit){ destroy(hit); }
+  else { wrongSubmits++; beep(200,.15,"square",.06); input.classList.add("err"); setTimeout(()=>input.classList.remove("err"),300); }
+  input.value=""; highlight(null,0); hud();
+}
+
+input.addEventListener("compositionstart",()=>{ composing=true; });
+input.addEventListener("compositionend",()=>{ composing=false; evaluate(); });
+input.addEventListener("input",()=>{ evaluate(); });
+input.addEventListener("keydown",e=>{
+  if(e.isComposing || e.keyCode===229) return; // let IME handle it
+  if(e.key==="Enter"){ e.preventDefault(); submit(); }
+  else if(e.key===" "){
+    // allow spaces inside multi-word phrases: only submit if no target expects a space next
+    const v = input.value;
+    const wants = words.some(w=>{ const ft=fold(v); const fw=fold(w.text); return fw.startsWith(ft+" "); })
+               || words.some(w=> (marks&&lang==="vi") && w.telex.includes(" ") && prefixLen(v,w,true)>=0 && !isMatch(v,w,true));
+    if(!wants){ e.preventDefault(); submit(); }
+  }
+  else if(e.key==="Escape"){ e.preventDefault(); togglePause(); }
+});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape" && running && document.activeElement!==input){ togglePause(); }
+  if(e.key==="Enter" && !$("start").classList.contains("hidden") && document.activeElement.tagName!=="BUTTON") start();
+});
+function togglePause(){
+  if(!running) return;
+  paused=!paused;
+  $("pausedBox").classList.toggle("hidden",!paused);
+  $("pauseBtn").textContent = paused?"▶️":"⏸️";
+  if(!paused){ lastT=performance.now(); input.focus(); }
+}
+$("pauseBtn").onclick=togglePause;
+$("pausedBox").onclick=togglePause;
+arena.addEventListener("click",e=>{ if(!paused) input.focus(); });
+document.addEventListener("visibilitychange",()=>{ if(document.hidden && running && !paused) togglePause(); });
+
+function gameOver(){
+  running=false; cancelAnimationFrame(raf);
+  input.blur();
+  const mins=playTime/60;
+  const wpm = mins>0 ? Math.round((charsDone/5)/mins) : 0;
+  const acc = accuracy();
+  $("finalScore").textContent=score+" điểm";
+  $("rWpm").textContent=wpm; $("rAcc").textContent=acc+"%";
+  $("rWords").textContent=destroyed; $("rLevel").textContent=level;
+  $("missedLine").textContent=`Bỏ lỡ ${missed} từ · Gõ sai ${wrongSubmits} lần · Thời gian ${Math.round(playTime)} giây`;
+  const best=store.get(bestKey(),null);
+  const isBest = !best || score>best.score;
+  if(isBest && score>0) store.set(bestKey(),{score,wpm});
+  $("newBest").classList.toggle("hidden", !(isBest && score>0));
+  [784,659,523,392].forEach((f,i)=>setTimeout(()=>beep(f,.2,"triangle"),i*130));
+  show("result");
+}
+
+$("startBtn").onclick=start;
+$("againBtn").onclick=start;
+$("menuBtn").onclick=()=>{ settingsUI(); show("start"); };
+settingsUI();
+window.__typing = {isMatch:(v,t,m)=>isMatch(v,{text:t,telex:telexParts(t).map(p=>p.base).join(" ")},m), words:()=>words.map(w=>w.text)};
+})();
+</script>
+</body>
+</html>
