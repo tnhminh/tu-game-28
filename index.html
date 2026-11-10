@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tủ Game 28</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Be+Vietnam+Pro:wght@400;500;600&display=swap">
+<style>
+/* Layout: a dark cabinet shelf — one band per genre, game cartridges in a wrapping grid. Single deliberate dark look. */
+:root {
+  color-scheme: dark;
+  --bg: #12131c;
+  --panel: #1b1d2a;
+  --panel-hi: #242738;
+  --line: #2f3348;
+  --fg: #eceaf4;
+  --muted: #9a9cb5;
+  --accent: #ffc94a;
+  --display: "Chakra Petch", "Trebuchet MS", system-ui, sans-serif;
+  --body: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 15px/1.55 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 56px;
+}
+.wrap { max-width: 1080px; margin: 0 auto; display: grid; gap: 40px; }
+header { display: grid; gap: 10px; }
+.eyebrow { font: 600 12px/1 var(--display); letter-spacing: .18em; text-transform: uppercase; color: var(--accent); }
+h1 { font: 700 clamp(34px, 7vw, 60px)/1 var(--display); margin: 0; text-wrap: balance; letter-spacing: -.01em; }
+h1 span { color: var(--accent); }
+.lede { color: var(--muted); max-width: 60ch; margin: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.chips a {
+  font: 600 13px/1 var(--display); letter-spacing: .04em; color: var(--fg); text-decoration: none;
+  padding: 8px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel);
+}
+.chips a:hover, .chips a:focus-visible { border-color: var(--g); color: var(--g); outline: none; }
+
+section { display: grid; gap: 14px; scroll-margin-top: 16px; }
+.sec-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; border-bottom: 2px solid var(--g); padding-bottom: 8px; }
+.sec-head h2 { font: 700 22px/1.1 var(--display); margin: 0; color: var(--g); letter-spacing: .02em; }
+.sec-head p { margin: 0; color: var(--muted); font-size: 13px; }
+
+.grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 900px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 460px) { .grid { grid-template-columns: 1fr; } }
+
+.game {
+  display: grid; grid-template-rows: auto auto 1fr auto; gap: 6px;
+  padding: 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  color: inherit; text-decoration: none; min-width: 0;
+  transition: transform .15s ease, border-color .15s ease, background .15s ease;
+}
+.game:hover, .game:focus-visible { transform: translateY(-3px); border-color: var(--g); background: var(--panel-hi); outline: none; }
+.game .ico { font-size: 30px; line-height: 1; }
+.game h3 { font: 700 17px/1.2 var(--display); margin: 4px 0 0; }
+.game p { margin: 0; color: var(--muted); font-size: 13.5px; }
+.game .play { font: 600 12px/1 var(--display); letter-spacing: .12em; text-transform: uppercase; color: var(--g); margin-top: 8px; }
+
+footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); padding-top: 16px; }
+@media (prefers-reduced-motion: reduce) { .game { transition: none; } .game:hover { transform: none; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">7 thể loại · 28 game</div>
+    <h1>Tủ Game <span>28</span></h1>
+    <p class="lede">Mọi game chạy ngay trên trình duyệt, chơi được bằng bàn phím hoặc cảm ứng trên điện thoại. Điểm cao được lưu trên máy của bạn.</p>
+    <nav class="chips" id="chips" aria-label="Thể loại"></nav>
+  </header>
+  <main id="shelf" class="wrap" style="gap:40px"></main>
+  <footer>Các game đều là thiết kế gốc, chỉ dùng chung cơ chế với thể loại. Cờ, bài dân gian theo luật truyền thống.</footer>
+</div>
+
+<script>
+const GENRES = [
+  { id: "arcade", name: "Arcade", note: "Phản xạ nhanh, chơi từng ván ngắn", color: "#ff5d8f", games: [
+    ["🐍", "Rắn Neon", "Rắn săn mồi có cổng dịch chuyển và vật phẩm."],
+    ["☄️", "Né Thiên Thạch", "Lái phi thuyền né mưa thiên thạch, càng lúc càng nhanh."],
+    ["🛩️", "Phi Đội Bầu Trời", "Bắn máy bay theo đợt, nhặt vật phẩm, đánh trùm."],
+    ["🧱", "Phá Gạch Pha Lê", "Đỡ bóng phá gạch qua nhiều màn thiết kế sẵn."] ] },
+  { id: "puzzle", name: "Giải đố", note: "Suy nghĩ, sắp xếp, tìm lời giải", color: "#4ad8ff", games: [
+    ["🟪", "Khối Rơi Ngũ Sắc", "Xếp khối rơi cho đầy hàng để xóa, tốc độ tăng dần."],
+    ["🍉", "Ghép Trái Cây", "Đổi chỗ trái cây để ghép 3, đạt mục tiêu trong số lượt."],
+    ["📦", "Đẩy Thùng Kho", "14 màn đẩy thùng vào đúng chỗ, có hoàn tác và chọn màn."],
+    ["🪷", "Sudoku Sen", "Sudoku tạo đề ngẫu nhiên, 3 mức khó, ghi chú bút chì."] ] },
+  { id: "board", name: "Cờ & Bài", note: "Luật truyền thống, chơi với máy hoặc 2 người", color: "#ffc94a", games: [
+    ["⭕", "Cờ Caro", "Năm quân liền hàng thắng, đấu máy 3 mức khó."],
+    ["🐘", "Cờ Tướng", "Đầy đủ luật, chiếu tướng, đấu máy hoặc 2 người."],
+    ["🃏", "Tiến Lên Miền Nam", "Đánh bài với 3 máy, có chặt heo bằng tứ quý, đôi thông."],
+    ["♠️", "Xếp Bài Solitaire", "Xếp bài kiên nhẫn, kéo thả, rút 1 hoặc 3 lá."] ] },
+  { id: "action", name: "Hành động", note: "Nhảy, bắn, sinh tồn, phòng thủ", color: "#7dff8a", games: [
+    ["🐱", "Mèo Phiêu Lưu", "Platformer 2D qua 5 màn, nhặt xu, giẫm quái."],
+    ["🗝️", "Hầm Ngục Ngẫu Nhiên", "Roguelite: hầm ngục sinh ngẫu nhiên, chết là chơi lại."],
+    ["🧟", "Bắn Zombie Sinh Tồn", "Trụ qua các đợt zombie, nâng cấp vũ khí."],
+    ["🏰", "Thủ Thành", "Xây 4 loại tháp chặn 20 đợt quân địch."] ] },
+  { id: "strategy", name: "Chiến thuật & Mô phỏng", note: "Quản lý, xây dựng, tính nước đi", color: "#c28bff", games: [
+    ["🍜", "Tiệm Phở Triệu Đô", "Nấu phở, thuê nhân viên, làm giàu kể cả khi offline."],
+    ["🌾", "Nông Trại Xanh", "Gieo, tưới, thu hoạch, bán nông sản, mở rộng đất."],
+    ["⚔️", "Hiệp Sĩ Theo Lượt", "Đội 3 anh hùng đánh theo lượt qua 10 trận, hạ Hắc Long."],
+    ["🔮", "Bộ Bài Phép Thuật", "Xây bộ bài, vượt bản đồ, hạ trùm cuối."] ] },
+  { id: "casual", name: "Giáo dục & Giải trí", note: "Học mà chơi, chơi mà học", color: "#ff9a4a", games: [
+    ["🇻🇳", "Đố Vui Việt Nam", "72 câu hỏi về địa lý, lịch sử, văn hóa, ẩm thực."],
+    ["⌨️", "Gõ Phím Thần Tốc", "Gõ chữ rơi để tiêu diệt, đo WPM, có tiếng Việt."],
+    ["➗", "Toán Nhanh", "Tính nhẩm 60 giây, combo nhân điểm."],
+    ["🧠", "Lật Thẻ Ghi Nhớ", "Lật thẻ tìm cặp, 3 cỡ bàn, nhiều chủ đề."] ] },
+  { id: "multiplayer", name: "Chơi chung", note: "2–4 người trên cùng một máy", color: "#5dffd6", games: [
+    ["🏓", "Bóng Bàn Đôi", "Hai người đỡ bóng, ai đủ 7 điểm trước thắng."],
+    ["🛡️", "Xe Tăng Đại Chiến", "Đấu xe tăng trong mê cung, đạn nảy tường."],
+    ["🎲", "Cờ Cá Ngựa", "2–4 người hoặc máy, đổ xúc xắc, đá ngựa."],
+    ["⚡", "Ai Nhanh Hơn", "Thi phản xạ nhiều trò nhỏ, ai đủ 10 điểm thắng."] ] },
+];
+const shelf = document.getElementById("shelf"), chips = document.getElementById("chips");
+for (const g of GENRES) {
+  const chip = document.createElement("a");
+  chip.href = "#" + g.id; chip.textContent = g.name; chip.style.setProperty("--g", g.color);
+  chips.append(chip);
+  const sec = document.createElement("section");
+  sec.id = g.id; sec.style.setProperty("--g", g.color);
+  sec.innerHTML = `<div class="sec-head"><h2>${g.name}</h2><p>${g.note}</p></div><div class="grid"></div>`;
+  const grid = sec.querySelector(".grid");
+  g.games.forEach(([ico, title, desc], i) => {
+    const a = document.createElement("a");
+    a.className = "game"; a.href = `${g.id}/game${i + 1}.html`;
+    a.innerHTML = `<div class="ico" aria-hidden="true">${ico}</div><h3>${title}</h3><p>${desc}</p><div class="play">Chơi ngay →</div>`;
+    grid.append(a);
+  });
+  shelf.append(sec);
+}
+</script>
+</body>
+</html>
