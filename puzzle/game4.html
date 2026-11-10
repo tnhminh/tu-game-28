@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Sudoku Sen</title>
+<style>
+:root{
+  --bg:#fbf1f3; --bg2:#f3e3e8; --ink:#3b2a33; --muted:#8a7280; --rose:#d6577a; --rose2:#b83f62; --leaf:#4f8a6b;
+  --cell:#fffafb; --given:#3b2a33; --user:#2f6fb5; --sel:#ffd3df; --peer:#fbe6ec; --same:#f7c1d0; --err:#e0423a; --errbg:#ffe1df;
+  --line:#c9a7b4; --thick:#7a4b5e;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{background:linear-gradient(160deg,var(--bg),var(--bg2));background-color:var(--bg);color:var(--ink);font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+  overflow-x:hidden;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+.back{position:fixed;top:8px;left:10px;z-index:30;color:var(--muted);text-decoration:none;font-size:13px;padding:4px 8px;border-radius:8px;background:rgba(255,255,255,.6)}
+.back:hover{color:var(--rose2)}
+#app{max-width:520px;margin:0 auto;padding:40px 12px 16px}
+header{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+h1{font-size:24px;color:var(--rose2);display:flex;align-items:center;gap:6px}
+.lotus{width:28px;height:28px}
+.info{display:flex;gap:6px;font-size:13px}
+.pill{background:#fff;border-radius:999px;padding:4px 10px;box-shadow:0 1px 3px rgba(120,60,80,.15);white-space:nowrap}
+.pill b{color:var(--rose2)}
+#board{display:grid;grid-template-columns:repeat(9,1fr);width:min(100%,468px);aspect-ratio:1;margin:0 auto;background:var(--thick);border:3px solid var(--thick);border-radius:10px;overflow:hidden;gap:1px;box-shadow:0 8px 24px rgba(120,60,80,.2)}
+.c{background:var(--cell);position:relative;display:flex;align-items:center;justify-content:center;font-size:clamp(18px,5.6vw,28px);cursor:pointer;transition:background .12s}
+.c.br{margin-right:2px}.c.bb{margin-bottom:2px}
+.c.peer{background:var(--peer)}
+.c.same{background:var(--same)}
+.c.sel{background:var(--sel);box-shadow:inset 0 0 0 2px var(--rose)}
+.c.given{color:var(--given);font-weight:700}
+.c.user{color:var(--user);font-weight:600}
+.c.wrong{color:var(--err);background:var(--errbg)}
+.c.conf::after{content:"";position:absolute;inset:2px;border:2px dashed rgba(224,66,58,.55);border-radius:4px;pointer-events:none}
+.c.pop .v{animation:pop .25s}
+.c.flash{animation:flash .6s}
+@keyframes pop{0%{transform:scale(.4)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
+@keyframes flash{0%{background:#ffe9a8}100%{}}
+.notes{position:absolute;inset:1px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);font-size:clamp(8px,2.3vw,12px);color:#8b6a7a;line-height:1}
+.notes span{display:flex;align-items:center;justify-content:center}
+.notes span.hl{color:var(--rose2);font-weight:700}
+.tools{display:flex;justify-content:space-between;gap:6px;margin:12px auto 8px;width:min(100%,468px)}
+.tools button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;padding:8px 2px}
+.tools button i{font-style:normal;font-size:20px}
+.tools button.on{background:var(--rose);color:#fff}
+.tools button.on span::after{content:" ✓"}
+button{font:inherit;border:none;background:#fff;color:var(--ink);border-radius:10px;cursor:pointer;box-shadow:0 1px 3px rgba(120,60,80,.18);transition:transform .1s,background .2s}
+button:hover{background:#fff4f7}
+button:active{transform:scale(.94)}
+button.primary{background:linear-gradient(180deg,var(--rose),var(--rose2));color:#fff;font-weight:700;padding:10px 18px}
+.pad{display:grid;grid-template-columns:repeat(9,1fr);gap:5px;width:min(100%,468px);margin:0 auto}
+.pad button{font-size:22px;font-weight:600;padding:8px 0 4px;color:var(--rose2);display:flex;flex-direction:column;align-items:center}
+.pad button small{font-size:10px;color:var(--muted);font-weight:400}
+.pad button.done{opacity:.3}
+.pad.notes-mode button{color:var(--leaf)}
+.overlay{position:fixed;inset:0;background:rgba(60,30,45,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20;animation:fade .25s}
+.overlay.hidden{display:none}
+@keyframes fade{from{opacity:0}}
+.card{background:#fff;border-radius:18px;padding:22px;max-width:420px;width:100%;max-height:92vh;overflow:auto;text-align:center;box-shadow:0 20px 50px rgba(60,20,40,.35);animation:cardIn .3s}
+@keyframes cardIn{from{transform:translateY(20px);opacity:0}}
+.card h2{color:var(--rose2);font-size:26px;margin-bottom:8px}
+.card p,.card li{font-size:14px;line-height:1.5;color:#5a4450}
+.card ul{text-align:left;margin:8px 0 12px 18px}
+.diffs{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.diffs button{padding:12px;font-size:16px;display:flex;justify-content:space-between;align-items:center;border:2px solid #f2d3dc}
+.diffs button small{color:var(--muted);font-size:12px}
+.diffs button:hover{border-color:var(--rose)}
+.btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.btns button{padding:10px 16px}
+.big{font-size:46px}
+#gen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.6);z-index:25;font-size:16px;color:var(--rose2)}
+#gen.hidden{display:none}
+.petal{position:fixed;top:-20px;width:14px;height:14px;background:var(--rose);border-radius:0 70% 0 70%;opacity:.8;pointer-events:none;z-index:40;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+</style>
+</head>
+<body>
+<a class="back" href="../index.html">← Danh sách game</a>
+<div id="app">
+  <header>
+    <h1><svg class="lotus" viewBox="0 0 40 40"><path d="M20 6c4 6 4 14 0 22-4-8-4-16 0-22z" fill="#e66e91"/><path d="M20 28C14 24 8 20 6 12c7 1 12 6 14 16z" fill="#f08aa8"/><path d="M20 28c6-4 12-8 14-16-7 1-12 6-14 16z" fill="#f08aa8"/><path d="M6 30c8 4 20 4 28 0" stroke="#4f8a6b" stroke-width="3" fill="none" stroke-linecap="round"/></svg>Sudoku Sen</h1>
+    <div class="info">
+      <span class="pill" id="pDiff">Dễ</span>
+      <span class="pill">⏱ <b id="pTime">00:00</b></span>
+      <span class="pill">Lỗi <b id="pErr">0/3</b></span>
+    </div>
+  </header>
+  <div id="board"></div>
+  <div class="tools">
+    <button id="tUndo"><i>↶</i>Hoàn tác</button>
+    <button id="tErase"><i>⌫</i>Xóa</button>
+    <button id="tNotes"><i>✎</i><span>Ghi chú</span></button>
+    <button id="tHint"><i>💡</i><span>Gợi ý (<b id="hintN">3</b>)</span></button>
+    <button id="tMenu"><i>☰</i>Ván mới</button>
+  </div>
+  <div class="pad" id="pad"></div>
+</div>
+
+<div class="overlay" id="ovStart">
+  <div class="card">
+    <h2>Sudoku Sen</h2>
+    <p>Điền các số từ 1 đến 9 sao cho mỗi <b>hàng</b>, mỗi <b>cột</b> và mỗi <b>ô 3×3</b> đều có đủ 9 số khác nhau.</p>
+    <ul>
+      <li>Chọn ô rồi bấm số trên bàn phím số hoặc phím <b>1–9</b>. Di chuyển ô chọn bằng <b>phím mũi tên</b>.</li>
+      <li><b>Ghi chú</b> (phím <b>N</b>): ghi các số dự đoán nhỏ trong ô.</li>
+      <li>Số sai sẽ hiện màu đỏ. Sai quá <b>3 lần</b> là thua!</li>
+      <li><b>Xóa</b>: Backspace/Delete • <b>Hoàn tác</b>: phím Z • Mỗi ván có 3 lần gợi ý.</li>
+    </ul>
+    <div class="diffs">
+      <button data-d="0"><span>🌱 Dễ</span><small id="best0"></small></button>
+      <button data-d="1"><span>🌸 Trung bình</span><small id="best1"></small></button>
+      <button data-d="2"><span>🔥 Khó</span><small id="best2"></small></button>
+    </div>
+    <div class="btns" id="contWrap"><button id="bContinue" class="primary">Tiếp tục ván đang chơi</button></div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="ovEnd">
+  <div class="card">
+    <div class="big" id="endIcon">🪷</div>
+    <h2 id="endTitle">Tuyệt vời!</h2>
+    <p id="endTxt"></p>
+    <div class="btns">
+      <button class="primary" id="bAgain">Chơi ván mới</button>
+      <button id="bMenu">Chọn độ khó</button>
+    </div>
+  </div>
+</div>
+<div id="gen" class="hidden">Đang tạo câu đố…</div>
+
+<script>
+(function(){
+'use strict';
+const DIFFS = [
+  {name:'Dễ', givens:38},
+  {name:'Trung bình', givens:30},
+  {name:'Khó', givens:24}
+];
+const MAX_ERR = 3, MAX_HINT = 3;
+const SKEY = 'sudokuSen.v1';
+function load(){ try{ const s = JSON.parse(localStorage.getItem(SKEY)); if(s&&typeof s==='object') return s; }catch(e){} return {}; }
+let store = load(); store.best = store.best||{};
+function persist(){ try{ localStorage.setItem(SKEY, JSON.stringify(store)); }catch(e){} }
+
+// ---------- Bộ giải / sinh đề (bitmask) ----------
+const ROW=[],COL=[],BOX=[],PEERS=[];
+for(let i=0;i<81;i++){ROW[i]=Math.floor(i/9);COL[i]=i%9;BOX[i]=Math.floor(ROW[i]/3)*3+Math.floor(COL[i]/3);}
+for(let i=0;i<81;i++){const p=[];for(let j=0;j<81;j++) if(j!==i&&(ROW[i]===ROW[j]||COL[i]===COL[j]||BOX[i]===BOX[j])) p.push(j); PEERS[i]=p;}
+const popc = m=>{let c=0;while(m){m&=m-1;c++;}return c;};
+
+// đếm số lời giải (dừng ở limit)
+function countSolutions(grid, limit){
+  const g = grid.slice(); const r=new Array(9).fill(0),c=new Array(9).fill(0),b=new Array(9).fill(0);
+  for(let i=0;i<81;i++) if(g[i]){const m=1<<g[i]; if((r[ROW[i]]|c[COL[i]]|b[BOX[i]])&m) return 0; r[ROW[i]]|=m;c[COL[i]]|=m;b[BOX[i]]|=m;}
+  let count=0;
+  function rec(){
+    let best=-1,bestM=0,bestC=10;
+    for(let i=0;i<81;i++) if(!g[i]){
+      const m = ~(r[ROW[i]]|c[COL[i]]|b[BOX[i]]) & 0x3FE; const n=popc(m);
+      if(n<bestC){bestC=n;best=i;bestM=m; if(n===0) return; if(n===1) break;}
+    }
+    if(best<0){count++;return;}
+    for(let d=1;d<=9;d++) if(bestM&(1<<d)){
+      const m=1<<d; g[best]=d; r[ROW[best]]|=m;c[COL[best]]|=m;b[BOX[best]]|=m;
+      rec();
+      g[best]=0; r[ROW[best]]&=~m;c[COL[best]]&=~m;b[BOX[best]]&=~m;
+      if(count>=limit) return;
+    }
+  }
+  rec(); return count;
+}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function fullGrid(){
+  const g=new Array(81).fill(0);
+  function rec(i){
+    if(i===81) return true;
+    const used=new Set(PEERS[i].map(j=>g[j]));
+    for(const d of shuffle([1,2,3,4,5,6,7,8,9])) if(!used.has(d)){g[i]=d; if(rec(i+1)) return true;}
+    g[i]=0; return false;
+  }
+  rec(0); return g;
+}
+function generate(diff){
+  const target = DIFFS[diff].givens;
+  let bestPuzzle=null, bestSol=null, bestGiven=99;
+  for(let attempt=0; attempt<6; attempt++){
+    const sol = fullGrid(); const puz = sol.slice();
+    // xóa theo cặp đối xứng tâm cho đẹp
+    const order = shuffle([...Array(41).keys()]);
+    let given=81;
+    for(const i of order){
+      if(given<=target) break;
+      const j=80-i; const a=puz[i], b=puz[j];
+      puz[i]=0; puz[j]=0;
+      if(countSolutions(puz,2)!==1){puz[i]=a;puz[j]=b;}
+      else given -= (i===j?1:2);
+    }
+    if(given<bestGiven){bestGiven=given;bestPuzzle=puz.slice();bestSol=sol;}
+    if(given<=target+1) break;
+  }
+  return {puzzle:bestPuzzle, solution:bestSol};
+}
+
+// ---------- Trạng thái ván ----------
+let G = null; // {diff,puzzle,solution,vals,notes,errors,hints,time,done}
+let sel = 40, notesMode=false, undoStack=[], timerId=null, lastTick=0;
+
+const boardEl=document.getElementById('board'), padEl=document.getElementById('pad');
+const cells=[];
+for(let i=0;i<81;i++){
+  const d=document.createElement('div'); d.className='c';
+  if(COL[i]===2||COL[i]===5) d.classList.add('br');
+  if(ROW[i]===2||ROW[i]===5) d.classList.add('bb');
+  d.addEventListener('pointerdown',e=>{e.preventDefault();select(i);});
+  boardEl.appendChild(d); cells.push(d);
+}
+for(let n=1;n<=9;n++){
+  const b=document.createElement('button'); b.innerHTML=n+'<small></small>'; b.dataset.n=n;
+  b.addEventListener('click',()=>input(n)); padEl.appendChild(b);
+}
+
+function newGame(diff){
+  document.getElementById('gen').classList.remove('hidden');
+  hide('ovStart'); hide('ovEnd');
+  setTimeout(()=>{
+    const {puzzle,solution} = generate(diff);
+    G = {diff,puzzle,solution,vals:puzzle.slice(),notes:new Array(81).fill(0),errors:0,hints:MAX_HINT,time:0,done:false};
+    undoStack=[]; sel = puzzle.indexOf(0); notesMode=false;
+    document.getElementById('gen').classList.add('hidden');
+    saveGame(); render(); startTimer();
+  },30);
+}
+function saveGame(){ store.cur = (G && !G.done) ? G : null; persist(); }
+
+function startTimer(){
+  stopTimer(); lastTick=Date.now();
+  timerId=setInterval(()=>{
+    if(!G||G.done) return;
+    if(document.querySelector('.overlay:not(.hidden)')||document.hidden){lastTick=Date.now();return;}
+    const now=Date.now(); G.time += (now-lastTick)/1000; lastTick=now; renderTime();
+    if(Math.floor(G.time)%5===0) saveGame();
+  },250);
+}
+function stopTimer(){ if(timerId) clearInterval(timerId); timerId=null; }
+function fmt(t){t=Math.floor(t);const m=Math.floor(t/60),s=t%60;return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;}
+function renderTime(){document.getElementById('pTime').textContent=fmt(G?G.time:0);}
+
+function select(i){ if(!G) return; sel=i; render(); }
+
+function conflicts(i){ const v=G.vals[i]; if(!v) return false; return PEERS[i].some(j=>G.vals[j]===v); }
+
+function pushUndo(i){ undoStack.push({i,v:G.vals[i],n:G.notes[i],peers:PEERS[i].map(j=>G.notes[j])}); if(undoStack.length>300) undoStack.shift(); }
+
+function input(n){
+  if(!G||G.done||G.puzzle[sel]) return;
+  if(notesMode){
+    if(G.vals[sel]) return;
+    pushUndo(sel); G.notes[sel]^=(1<<n); sfx(500+n*30,.04); saveGame(); render(); return;
+  }
+  if(G.vals[sel]===n) return;
+  pushUndo(sel);
+  G.vals[sel]=n; G.notes[sel]=0;
+  PEERS[sel].forEach(j=>G.notes[j]&=~(1<<n));
+  const wrong = G.solution[sel]!==n;
+  render(sel);
+  if(wrong){
+    G.errors++; sfx(140,.2,'sawtooth');
+    if(G.errors>=MAX_ERR){ saveGame(); return lose(); }
+  } else {
+    sfx(660+n*25,.08);
+    flashUnits(sel);
+    if(G.vals.every((v,i)=>v===G.solution[i])) return win();
+  }
+  saveGame();
+}
+function erase(){
+  if(!G||G.done||G.puzzle[sel]) return;
+  if(!G.vals[sel]&&!G.notes[sel]) return;
+  pushUndo(sel); G.vals[sel]=0; G.notes[sel]=0; sfx(300,.05); saveGame(); render();
+}
+function undo(){
+  if(!G||G.done||!undoStack.length) return;
+  const u=undoStack.pop(); G.vals[u.i]=u.v; G.notes[u.i]=u.n; PEERS[u.i].forEach((j,k)=>G.notes[j]=u.peers[k]);
+  sel=u.i; sfx(350,.05); saveGame(); render();
+}
+function hint(){
+  if(!G||G.done||G.hints<=0) return;
+  let i = sel;
+  if(G.puzzle[i] || G.vals[i]===G.solution[i]){
+    const empties=[];for(let k=0;k<81;k++) if(G.vals[k]!==G.solution[k]) empties.push(k);
+    if(!empties.length) return; i = empties[Math.floor(Math.random()*empties.length)];
+  }
+  pushUndo(i); G.hints--; sel=i;
+  G.vals[i]=G.solution[i]; G.notes[i]=0; PEERS[i].forEach(j=>G.notes[j]&=~(1<<G.vals[i]));
+  sfx(880,.12,'sine'); render(i); flashUnits(i);
+  if(G.vals.every((v,k)=>v===G.solution[k])) return win();
+  saveGame();
+}
+function flashUnits(i){
+  const units=[ [...Array(81).keys()].filter(k=>ROW[k]===ROW[i]), [...Array(81).keys()].filter(k=>COL[k]===COL[i]), [...Array(81).keys()].filter(k=>BOX[k]===BOX[i]) ];
+  units.forEach(u=>{ if(u.every(k=>G.vals[k]===G.solution[k])) u.forEach((k,idx)=>{const c=cells[k]; c.classList.remove('flash'); void c.offsetWidth; c.style.animationDelay=(idx*25)+'ms'; c.classList.add('flash');}); });
+}
+
+function render(popIdx){
+  if(!G) return;
+  const sv = G.vals[sel];
+  for(let i=0;i<81;i++){
+    const c=cells[i], v=G.vals[i];
+    let cls='c';
+    if(COL[i]===2||COL[i]===5) cls+=' br';
+    if(ROW[i]===2||ROW[i]===5) cls+=' bb';
+    if(i===sel) cls+=' sel';
+    else if(sv && v===sv) cls+=' same';
+    else if(ROW[i]===ROW[sel]||COL[i]===COL[sel]||BOX[i]===BOX[sel]) cls+=' peer';
+    if(G.puzzle[i]) cls+=' given';
+    else if(v){ cls+=' user'; if(v!==G.solution[i]) cls+=' wrong'; }
+    if(v && conflicts(i)) cls+=' conf';
+    if(i===popIdx) cls+=' pop';
+    if(c.classList.contains('flash')) cls+=' flash';
+    c.className=cls;
+    if(v){ c.innerHTML='<span class="v">'+v+'</span>'; }
+    else if(G.notes[i]){
+      let h='<div class="notes">';
+      for(let n=1;n<=9;n++) h+='<span'+(sv===n?' class="hl"':'')+'>'+((G.notes[i]>>n)&1?n:'')+'</span>';
+      c.innerHTML=h+'</div>';
+    } else c.innerHTML='';
+  }
+  // bàn phím số: số lượng còn lại
+  const cnt=new Array(10).fill(0); G.vals.forEach((v,i)=>{ if(v&&v===G.solution[i]) cnt[v]++; });
+  padEl.querySelectorAll('button').forEach(b=>{const n=+b.dataset.n; const left=9-cnt[n]; b.querySelector('small').textContent=left>0?left:'✓'; b.classList.toggle('done',left<=0);});
+  padEl.classList.toggle('notes-mode',notesMode);
+  const tn=document.getElementById('tNotes'); tn.classList.toggle('on',notesMode); tn.title='Ghi chú: '+(notesMode?'Bật':'Tắt')+' (phím N)';
+  document.getElementById('pDiff').textContent=DIFFS[G.diff].name;
+  document.getElementById('pErr').textContent=G.errors+'/'+MAX_ERR;
+  document.getElementById('hintN').textContent=G.hints;
+  renderTime();
+}
+
+function win(){
+  G.done=true; stopTimer();
+  const t=Math.floor(G.time), key=String(G.diff), prev=store.best[key];
+  const rec = !prev || t<prev; if(rec) store.best[key]=t;
+  store.cur=null; persist(); render();
+  [523,659,784,1046,1318].forEach((f,i)=>setTimeout(()=>sfx(f,.2,'sine'),i*120));
+  for(let k=0;k<36;k++){const p=document.createElement('div');p.className='petal';p.style.left=Math.random()*100+'vw';p.style.animationDuration=(2+Math.random()*2.5)+'s';p.style.animationDelay=Math.random()*1.2+'s';p.style.background=['#e66e91','#f4a3bb','#fbd0dc','#7fbf9b'][k%4];document.body.appendChild(p);setTimeout(()=>p.remove(),5000);}
+  setTimeout(()=>{
+    document.getElementById('endIcon').textContent='🪷';
+    document.getElementById('endTitle').textContent='Hoàn thành!';
+    document.getElementById('endTxt').innerHTML='Độ khó: <b>'+DIFFS[G.diff].name+'</b><br>Thời gian: <b>'+fmt(t)+'</b> &nbsp;•&nbsp; Lỗi: <b>'+G.errors+'</b><br>'+(rec?'🏆 Kỷ lục mới!':'Kỷ lục: <b>'+fmt(prev)+'</b>');
+    show('ovEnd');
+  },700);
+}
+function lose(){
+  G.done=true; stopTimer(); store.cur=null; persist(); render();
+  [300,250,200].forEach((f,i)=>setTimeout(()=>sfx(f,.25,'triangle'),i*160));
+  setTimeout(()=>{
+    document.getElementById('endIcon').textContent='🥀';
+    document.getElementById('endTitle').textContent='Thua rồi!';
+    document.getElementById('endTxt').innerHTML='Bạn đã sai '+MAX_ERR+' lần. Đừng nản, thử lại nhé!<br>Thời gian chơi: <b>'+fmt(G.time)+'</b>';
+    show('ovEnd');
+  },500);
+}
+
+// ---------- Âm thanh ----------
+let actx=null;
+function sfx(f,d,type){
+  try{ if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)();
+    const t=actx.currentTime,o=actx.createOscillator(),g=actx.createGain();
+    o.type=type||'triangle';o.frequency.value=f;g.gain.setValueAtTime(.06,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);
+    o.connect(g);g.connect(actx.destination);o.start(t);o.stop(t+d+.02);}catch(e){}
+}
+
+// ---------- Giao diện ----------
+function show(id){document.getElementById(id).classList.remove('hidden');}
+function hide(id){document.getElementById(id).classList.add('hidden');}
+function openMenu(){
+  for(let d=0;d<3;d++){const b=store.best[String(d)]; document.getElementById('best'+d).textContent=b?'Kỷ lục '+fmt(b):'Chưa có kỷ lục';}
+  const has = store.cur && store.cur.puzzle && !store.cur.done;
+  document.getElementById('contWrap').style.display = has ? '' : 'none';
+  hide('ovEnd'); show('ovStart');
+}
+document.querySelectorAll('.diffs button').forEach(b=>b.addEventListener('click',()=>newGame(+b.dataset.d)));
+document.getElementById('bContinue').onclick=()=>{ G=store.cur; undoStack=[]; sel=G.vals.findIndex((v,i)=>!v); if(sel<0) sel=0; hide('ovStart'); render(); startTimer(); };
+document.getElementById('bAgain').onclick=()=>newGame(G?G.diff:0);
+document.getElementById('bMenu').onclick=openMenu;
+document.getElementById('tMenu').onclick=openMenu;
+document.getElementById('tUndo').onclick=undo;
+document.getElementById('tErase').onclick=erase;
+document.getElementById('tHint').onclick=hint;
+document.getElementById('tNotes').onclick=()=>{notesMode=!notesMode;render();};
+
+window.addEventListener('keydown',e=>{
+  if(!G||document.querySelector('.overlay:not(.hidden)')) return;
+  const k=e.key;
+  if(k>='1'&&k<='9'){input(+k);return;}
+  const mv={ArrowUp:-9,ArrowDown:9,ArrowLeft:-1,ArrowRight:1};
+  if(mv[k]!==undefined){
+    e.preventDefault();
+    let r=ROW[sel],c=COL[sel];
+    if(k==='ArrowUp') r=(r+8)%9; if(k==='ArrowDown') r=(r+1)%9; if(k==='ArrowLeft') c=(c+8)%9; if(k==='ArrowRight') c=(c+1)%9;
+    select(r*9+c); return;
+  }
+  if(k==='Backspace'||k==='Delete'||k==='0'){e.preventDefault();erase();return;}
+  if(k==='n'||k==='N'){notesMode=!notesMode;render();return;}
+  if(k==='z'||k==='Z'){undo();return;}
+  if(k==='h'||k==='H'){hint();return;}
+});
+
+// khởi động
+G=null;
+openMenu();
+// bàn cờ trống mờ phía sau màn hình bắt đầu
+G={diff:0,puzzle:new Array(81).fill(0),solution:new Array(81).fill(0),vals:new Array(81).fill(0),notes:new Array(81).fill(0),errors:0,hints:MAX_HINT,time:0,done:true};
+render(); G=null;
+window.__sudoku={generate,countSolutions,get G(){return G;},newGame,input,select};
+})();
+</script>
+</body>
+</html>

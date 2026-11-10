@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Đẩy Thùng Kho</title>
+<style>
+:root{
+  --bg1:#1d2a33; --bg2:#0f171d; --panel:#24343f; --panel2:#2d414e;
+  --accent:#f2b544; --accent2:#e07b39; --ok:#5fd18b; --text:#eef3f5; --muted:#9fb3bf;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:radial-gradient(circle at 30% 0%,var(--bg1),var(--bg2) 70%);background-color:var(--bg2);color:var(--text);
+  font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;overflow-x:hidden;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+.back{position:fixed;top:8px;left:10px;z-index:30;color:var(--muted);text-decoration:none;font-size:13px;padding:4px 8px;border-radius:8px;background:rgba(0,0,0,.25)}
+.back:hover{color:var(--text)}
+#app{max-width:620px;margin:0 auto;padding:40px 12px 12px;display:flex;flex-direction:column;align-items:stretch;min-height:100%}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+h1{font-size:22px;letter-spacing:.5px;color:var(--accent)}
+h1 span{color:var(--text);font-weight:400;font-size:15px;margin-left:6px}
+.stats{display:flex;gap:6px}
+.stat{background:var(--panel);border-radius:10px;padding:4px 10px;text-align:center;min-width:62px}
+.stat b{display:block;font-size:17px}
+.stat small{font-size:11px;color:var(--muted)}
+#boardWrap{flex:1;display:flex;align-items:center;justify-content:center;margin:10px 0;min-height:200px;position:relative}
+canvas{display:block;filter:drop-shadow(0 10px 18px rgba(0,0,0,.45))}
+.toolbar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+button{font:inherit;border:none;cursor:pointer;color:var(--text);background:var(--panel2);padding:9px 14px;border-radius:10px;font-size:14px;transition:transform .1s,background .2s}
+button:hover{background:#3a5464}
+button:active{transform:scale(.95)}
+button.primary{background:linear-gradient(180deg,var(--accent),var(--accent2));color:#2a1a05;font-weight:700}
+.dpad{display:none;grid-template-columns:repeat(3,58px);grid-template-rows:repeat(2,50px);gap:6px;justify-content:center;margin-top:10px}
+.dpad button{font-size:22px;padding:0}
+.dpad .up{grid-column:2;grid-row:1}.dpad .left{grid-column:1;grid-row:2}.dpad .down{grid-column:2;grid-row:2}.dpad .right{grid-column:3;grid-row:2}
+@media (hover:none),(pointer:coarse),(max-width:640px){.dpad{display:grid}}
+.overlay{position:fixed;inset:0;background:rgba(5,10,14,.78);display:flex;align-items:center;justify-content:center;z-index:20;padding:16px;animation:fade .25s}
+.overlay.hidden{display:none}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.card{background:linear-gradient(180deg,#2b3f4c,#1f2e38);border:1px solid #3d5666;border-radius:16px;padding:22px;max-width:440px;width:100%;max-height:92vh;overflow:auto;text-align:center;animation:pop .3s}
+@keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.card h2{color:var(--accent);margin-bottom:10px;font-size:26px}
+.card p,.card li{color:#d5e1e7;font-size:14px;line-height:1.5}
+.card ul{text-align:left;margin:10px 0 16px 18px}
+.card .btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.levels{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px;margin-top:12px}
+.lv{padding:10px 0;border-radius:10px;font-weight:700;position:relative}
+.lv.done{background:#2f6d4c}
+.lv.locked{opacity:.35;cursor:not-allowed}
+.lv small{display:block;font-size:10px;font-weight:400;color:#cfe}
+.big{font-size:42px;margin:4px 0}
+.toast{position:absolute;top:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.6);padding:6px 12px;border-radius:8px;font-size:13px;pointer-events:none;opacity:0;transition:opacity .3s}
+</style>
+</head>
+<body>
+<a class="back" href="../index.html">← Danh sách game</a>
+<div id="app">
+  <header>
+    <h1>Đẩy Thùng Kho <span id="lvlLabel">Màn 1</span></h1>
+    <div class="stats">
+      <div class="stat"><b id="sMoves">0</b><small>Bước</small></div>
+      <div class="stat"><b id="sPush">0</b><small>Lần đẩy</small></div>
+      <div class="stat"><b id="sBest">–</b><small>Kỷ lục</small></div>
+    </div>
+  </header>
+  <div id="boardWrap"><canvas id="cv"></canvas><div class="toast" id="toast"></div></div>
+  <div class="toolbar">
+    <button id="bUndo" title="Phím Z">↶ Hoàn tác</button>
+    <button id="bRestart" title="Phím R">⟲ Chơi lại màn</button>
+    <button id="bLevels">☰ Chọn màn</button>
+    <button id="bSound">🔊</button>
+  </div>
+  <div class="dpad">
+    <button class="up" data-d="0,-1">▲</button>
+    <button class="left" data-d="-1,0">◀</button>
+    <button class="down" data-d="0,1">▼</button>
+    <button class="right" data-d="1,0">▶</button>
+  </div>
+</div>
+
+<div class="overlay" id="ovStart">
+  <div class="card">
+    <h2>Đẩy Thùng Kho</h2>
+    <p>Bạn là thủ kho chăm chỉ. Hãy đẩy mọi thùng hàng vào đúng ô đánh dấu!</p>
+    <ul>
+      <li>Di chuyển bằng <b>phím mũi tên</b> hoặc <b>W A S D</b>; trên điện thoại hãy <b>vuốt</b> trên bàn chơi hoặc dùng nút điều hướng.</li>
+      <li>Chỉ có thể <b>đẩy</b> thùng, không kéo được, và mỗi lần chỉ đẩy một thùng.</li>
+      <li><b>Z</b> / Backspace: hoàn tác &nbsp;•&nbsp; <b>R</b>: chơi lại màn.</li>
+      <li>Hoàn thành màn để mở khóa màn tiếp theo. Càng ít bước càng giỏi!</li>
+    </ul>
+    <div class="btns">
+      <button class="primary" id="bStart">Bắt đầu</button>
+      <button id="bStartLevels">Chọn màn</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="ovLevels">
+  <div class="card">
+    <h2>Chọn màn</h2>
+    <p id="progressTxt"></p>
+    <div class="levels" id="levelGrid"></div>
+    <div class="btns"><button id="bCloseLevels">Đóng</button></div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="ovWin">
+  <div class="card">
+    <div class="big">📦✨</div>
+    <h2 id="winTitle">Hoàn thành!</h2>
+    <p id="winTxt"></p>
+    <div class="btns">
+      <button class="primary" id="bNext">Màn tiếp theo</button>
+      <button id="bReplay">Chơi lại</button>
+      <button id="bWinLevels">Chọn màn</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+// # tường, . đích, $ thùng, * thùng trên đích, @ người, + người trên đích
+// Tất cả các màn đã được kiểm tra có lời giải bằng bộ giải BFS.
+const LEVELS = [
+[" ######"," #    #"," # @$.#"," #    #"," ######"],
+["#######","#     #","# $ $ #","#. @ .#","#######"],
+["#######","#  .  #","# #$# #","#.$@$.#","# #$# #","#  .  #","#######"],
+["#######","#. .  #","# $$  #","##  @##"," #   #"," #####"],
+["########","#  .   #","# $##$ #","#  @  .#","########"],
+["#######","#.    #","#.$$$ #","#.  # #","### @ #","  #####"],
+["  #######","  #     #","### $ $ #","#   #.  #","# $ ..# #","## #  @ #"," #      #"," ########"],
+[" #####","##   #","# $  #","# .#$##","# .@  #","#  $. #","#######"],
+["  ######","  #    #","### ## #","# $  $ #","# ..#@ #","##$.   #"," #   ###"," #####"],
+["########","#..  ###","#..$ $ #","### $$ #","  #@   #","  ######"],
+[" ########"," #   .  #"," # #$## #","##.  $  #","#  #@#  #","# $. .$ #","##     ##"," #######"],
+[" ########"," #      #"," # #$## #","##.  $. #","#  #@#  #","# $. .$ #","##  #  ##"," #######"],
+[" #######"," #  .  #"," # $#$ #","##  @  ##","#  #.#  #","# $   $ #","#  . .  #","#########"],
+["#########","#   #   #","# $ . $ #","#  ###  #","#.  @  .#","#  ###  #","# $ . $ #","#   #   #","#########"]
+];
+
+const STORE_KEY = 'dayThungKho.v1';
+function loadSave(){
+  try{ const s = JSON.parse(localStorage.getItem(STORE_KEY)); if(s && typeof s==='object') return {unlocked:s.unlocked||1,best:s.best||{},sound:s.sound!==false}; }catch(e){}
+  return {unlocked:1,best:{},sound:true};
+}
+let save = loadSave();
+function persist(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(save)); }catch(e){} }
+
+// ---------- Âm thanh ----------
+let actx=null;
+function beep(freq,dur,type,vol,slide){
+  if(!save.sound) return;
+  try{
+    if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)();
+    const t=actx.currentTime, o=actx.createOscillator(), g=actx.createGain();
+    o.type=type||'square'; o.frequency.setValueAtTime(freq,t);
+    if(slide) o.frequency.exponentialRampToValueAtTime(slide,t+dur);
+    g.gain.setValueAtTime(vol||0.05,t); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t+dur+0.02);
+  }catch(e){}
+}
+const sfx = {
+  step(){beep(220,0.05,'triangle',0.03)},
+  push(){beep(110,0.09,'sawtooth',0.04,80)},
+  goal(){beep(660,0.12,'sine',0.07,990)},
+  undo(){beep(330,0.06,'triangle',0.04,220)},
+  win(){[523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,0.18,'sine',0.08),i*110))}
+};
+
+// ---------- Trạng thái ----------
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+let lvIndex = 0, W=0, H=0, walls=null, goals=null, floor=null;
+let boxes=[], player={x:0,y:0,dir:2,ax:0,ay:0}, history=[], moves=0, pushes=0, won=false;
+let tile=40, dpr=1;
+let anim=null, winTimer=null; // {t0,dur,player:{fx,fy},box:{i,fx,fy}}
+const ANIM_MS = 110;
+
+function parseLevel(i){
+  const rows = LEVELS[i];
+  H = rows.length; W = Math.max(...rows.map(r=>r.length));
+  walls=[];goals=[];boxes=[];
+  for(let y=0;y<H;y++){walls.push([]);goals.push([]);
+    for(let x=0;x<W;x++){
+      const c = rows[y][x]||' ';
+      walls[y][x] = c==='#';
+      goals[y][x] = c==='.'||c==='*'||c==='+';
+      if(c==='$'||c==='*') boxes.push({x,y,ax:x,ay:y});
+      if(c==='@'||c==='+'){player={x,y,dir:2,ax:x,ay:y};}
+    }}
+  // các ô sàn bên trong (flood fill từ người chơi)
+  floor = walls.map(r=>r.map(()=>false));
+  const st=[[player.x,player.y]]; floor[player.y][player.x]=true;
+  while(st.length){const [x,y]=st.pop();
+    [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>{const nx=x+dx,ny=y+dy;
+      if(nx>=0&&ny>=0&&nx<W&&ny<H&&!walls[ny][nx]&&!floor[ny][nx]){floor[ny][nx]=true;st.push([nx,ny]);}});}
+  boxes.forEach(b=>floor[b.y][b.x]=true);
+}
+
+function startLevel(i){
+  lvIndex = Math.max(0,Math.min(LEVELS.length-1,i));
+  parseLevel(lvIndex);
+  clearTimeout(winTimer); history=[];moves=0;pushes=0;won=false;anim=null;
+  hideAll();
+  resize(); updateHud();
+}
+
+function boxAt(x,y){for(let i=0;i<boxes.length;i++) if(boxes[i].x===x&&boxes[i].y===y) return i; return -1;}
+function isWall(x,y){return x<0||y<0||x>=W||y>=H||walls[y][x];}
+
+function finishAnim(){ if(anim){ anim=null; player.ax=player.x;player.ay=player.y; boxes.forEach(b=>{b.ax=b.x;b.ay=b.y;}); } }
+
+function tryMove(dx,dy){
+  if(won) return;
+  if(document.querySelector('.overlay:not(.hidden)')) return;
+  finishAnim();
+  const dir = dy<0?0:dx>0?1:dy>0?2:3;
+  player.dir = dir;
+  const nx=player.x+dx, ny=player.y+dy;
+  if(isWall(nx,ny)){draw();return;}
+  const bi = boxAt(nx,ny);
+  const rec = {px:player.x,py:player.y,dir,bi:-1};
+  anim = {t0:performance.now(),player:{fx:player.x,fy:player.y},box:null};
+  if(bi>=0){
+    const bx=nx+dx, by=ny+dy;
+    if(isWall(bx,by)||boxAt(bx,by)>=0){anim=null;draw();return;}
+    rec.bi=bi;
+    anim.box={i:bi,fx:boxes[bi].x,fy:boxes[bi].y};
+    boxes[bi].x=bx;boxes[bi].y=by;pushes++;
+    if(goals[by][bx]) sfx.goal(); else sfx.push();
+  } else sfx.step();
+  player.x=nx;player.y=ny;moves++;
+  history.push(rec);
+  updateHud();
+  if(boxes.every(b=>goals[b.y][b.x])){ won=true; clearTimeout(winTimer); winTimer=setTimeout(onWin, ANIM_MS+250); }
+}
+
+function undo(){
+  if(won||!history.length) return;
+  finishAnim();
+  const r = history.pop();
+  if(r.bi>=0){ const b=boxes[r.bi]; b.x=player.x; b.y=player.y; b.ax=b.x; b.ay=b.y; pushes--; }
+  player.x=r.px;player.y=r.py;player.ax=r.px;player.ay=r.py;player.dir=r.dir;moves--;
+  sfx.undo(); updateHud(); draw();
+}
+
+function onWin(){
+  sfx.win();
+  const key=String(lvIndex), prev=save.best[key];
+  const isRecord = !prev || moves<prev;
+  if(isRecord) save.best[key]=moves;
+  if(save.unlocked < lvIndex+2) save.unlocked = Math.min(LEVELS.length, lvIndex+2);
+  persist();
+  const last = lvIndex===LEVELS.length-1;
+  document.getElementById('winTitle').textContent = last ? 'Bạn đã hoàn thành tất cả các màn!' : 'Hoàn thành màn '+(lvIndex+1)+'!';
+  document.getElementById('winTxt').innerHTML = 'Số bước: <b>'+moves+'</b> &nbsp;•&nbsp; Lần đẩy: <b>'+pushes+'</b><br>'+
+    (isRecord ? '🏆 Kỷ lục mới cho màn này!' : 'Kỷ lục của bạn: <b>'+prev+'</b> bước');
+  document.getElementById('bNext').style.display = last ? 'none':'';
+  show('ovWin'); updateHud();
+}
+
+function updateHud(){
+  document.getElementById('lvlLabel').textContent = 'Màn '+(lvIndex+1)+'/'+LEVELS.length;
+  document.getElementById('sMoves').textContent = moves;
+  document.getElementById('sPush').textContent = pushes;
+  const b = save.best[String(lvIndex)];
+  document.getElementById('sBest').textContent = b ? b : '–';
+  document.getElementById('bSound').textContent = save.sound ? '🔊':'🔇';
+}
+
+// ---------- Vẽ ----------
+function resize(){
+  const wrap = document.getElementById('boardWrap');
+  const maxW = Math.min(wrap.clientWidth, 600);
+  const used = document.getElementById('app').offsetHeight - wrap.offsetHeight;
+  const availH = Math.max(220, window.innerHeight - used - 24);
+  tile = Math.floor(Math.min(maxW/W, availH/H, 64));
+  tile = Math.max(tile, 18);
+  dpr = window.devicePixelRatio||1;
+  cv.style.width = (tile*W)+'px'; cv.style.height=(tile*H)+'px';
+  cv.width = Math.round(tile*W*dpr); cv.height = Math.round(tile*H*dpr);
+  draw();
+}
+
+function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+
+function drawBox(px,py,onGoal,t){
+  const s=tile, m=s*0.08, x=px*s+m, y=py*s+m, w=s-2*m;
+  ctx.fillStyle='rgba(0,0,0,.28)'; rr(x+3,y+4,w,w,s*.12); ctx.fill();
+  const g = ctx.createLinearGradient(x,y,x,y+w);
+  if(onGoal){g.addColorStop(0,'#ffd36b');g.addColorStop(1,'#d48a1c');}
+  else {g.addColorStop(0,'#c58a4f');g.addColorStop(1,'#8a552a');}
+  ctx.fillStyle=g; rr(x,y,w,w,s*.12); ctx.fill();
+  ctx.strokeStyle = onGoal?'#8a5a0a':'#5c3417'; ctx.lineWidth=Math.max(1.5,s*.06);
+  rr(x+w*.12,y+w*.12,w*.76,w*.76,s*.06); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x+w*.14,y+w*.14); ctx.lineTo(x+w*.86,y+w*.86);
+  ctx.moveTo(x+w*.86,y+w*.14); ctx.lineTo(x+w*.14,y+w*.86); ctx.stroke();
+  if(onGoal){
+    const a = 0.25+0.2*Math.sin(t/300);
+    ctx.fillStyle='rgba(255,255,200,'+a+')'; rr(x,y,w,w,s*.12); ctx.fill();
+  }
+}
+
+function drawPlayer(px,py,dir){
+  const s=tile, cx=px*s+s/2, cy=py*s+s/2, r=s*0.34;
+  ctx.fillStyle='rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(cx+2,cy+r*.95,r*.9,r*.3,0,0,Math.PI*2); ctx.fill();
+  // thân
+  ctx.fillStyle='#3a7bd5'; rr(cx-r*.75,cy-r*.05,r*1.5,r*1.0,r*.35); ctx.fill();
+  // đầu
+  ctx.fillStyle='#ffd9b0'; ctx.beginPath(); ctx.arc(cx,cy-r*.2,r*.62,0,Math.PI*2); ctx.fill();
+  // mũ bảo hộ
+  ctx.fillStyle='#f6c431'; ctx.beginPath(); ctx.arc(cx,cy-r*.32,r*.66,Math.PI,0); ctx.fill();
+  ctx.fillRect(cx-r*.8,cy-r*.36,r*1.6,r*.14);
+  // mắt theo hướng
+  const ox=[0,1,0,-1][dir]*r*.22, oy=[-1,0,1,0][dir]*r*.12;
+  if(dir!==0){
+    ctx.fillStyle='#222';
+    ctx.beginPath(); ctx.arc(cx-r*.22+ox,cy-r*.08+oy,r*.09,0,Math.PI*2); ctx.arc(cx+r*.22+ox,cy-r*.08+oy,r*.09,0,Math.PI*2); ctx.fill();
+  }
+}
+
+function draw(){
+  const t = performance.now();
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,W*tile,H*tile);
+  const s = tile;
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){
+    if(walls[y][x]){
+      // chỉ vẽ tường kề với sàn
+      let near=false;
+      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const nx=x+dx,ny=y+dy; if(nx>=0&&ny>=0&&nx<W&&ny<H&&floor[ny][nx]) near=true;}
+      if(!near) continue;
+      ctx.fillStyle='#4a5a66'; ctx.fillRect(x*s,y*s,s,s);
+      ctx.fillStyle='#5d707e'; ctx.fillRect(x*s+1,y*s+1,s-2,s*.45-1); ctx.fillRect(x*s+1,y*s+s*.5,s-2,s*.5-1);
+      ctx.fillStyle='#3b4851'; ctx.fillRect(x*s+s*.5,y*s,2,s*.45); ctx.fillRect(x*s+s*.25,y*s+s*.5,2,s*.5);
+      ctx.fillStyle='rgba(255,255,255,.08)'; ctx.fillRect(x*s,y*s,s,2);
+    } else if(floor[y][x]){
+      ctx.fillStyle = (x+y)%2 ? '#c9b99a' : '#bfae8d'; ctx.fillRect(x*s,y*s,s,s);
+      ctx.strokeStyle='rgba(0,0,0,.06)'; ctx.strokeRect(x*s+.5,y*s+.5,s-1,s-1);
+      if(goals[y][x]){
+        const pulse = 1+0.08*Math.sin(t/250+x+y);
+        ctx.save(); ctx.translate(x*s+s/2,y*s+s/2); ctx.rotate(Math.PI/4); ctx.scale(pulse,pulse);
+        ctx.fillStyle='rgba(230,90,60,.25)'; ctx.fillRect(-s*.26,-s*.26,s*.52,s*.52);
+        ctx.strokeStyle='#d9573a'; ctx.lineWidth=Math.max(2,s*.07); ctx.strokeRect(-s*.18,-s*.18,s*.36,s*.36);
+        ctx.restore();
+      }
+    }
+  }
+  // nội suy hoạt ảnh
+  let k = 1;
+  if(anim){ k = Math.min(1,(t-anim.t0)/ANIM_MS); const e = 1-(1-k)*(1-k);
+    player.ax = anim.player.fx+(player.x-anim.player.fx)*e; player.ay = anim.player.fy+(player.y-anim.player.fy)*e;
+    if(anim.box){const b=boxes[anim.box.i]; b.ax=anim.box.fx+(b.x-anim.box.fx)*e; b.ay=anim.box.fy+(b.y-anim.box.fy)*e;}
+    if(k>=1) finishAnim();
+  }
+  boxes.forEach(b=>drawBox(b.ax,b.ay,goals[b.y][b.x]&&(!anim||!anim.box||boxes[anim.box.i]!==b),t));
+  drawPlayer(player.ax,player.ay,player.dir);
+}
+function loop(){ if(walls) draw(); requestAnimationFrame(loop); }
+
+// ---------- Giao diện ----------
+function show(id){document.getElementById(id).classList.remove('hidden');}
+function hide(id){document.getElementById(id).classList.add('hidden');}
+function hideAll(){['ovStart','ovLevels','ovWin'].forEach(hide);}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.opacity=1;clearTimeout(toast._t);toast._t=setTimeout(()=>t.style.opacity=0,1200);}
+
+function openLevels(){
+  const grid=document.getElementById('levelGrid'); grid.innerHTML='';
+  const done = Object.keys(save.best).length;
+  document.getElementById('progressTxt').textContent='Đã hoàn thành '+done+'/'+LEVELS.length+' màn';
+  LEVELS.forEach((_,i)=>{
+    const b=document.createElement('button'); b.className='lv';
+    const best=save.best[String(i)];
+    if(best) b.classList.add('done');
+    const locked = i+1>save.unlocked;
+    if(locked) b.classList.add('locked');
+    b.innerHTML=(locked?'🔒 ':'')+(i+1)+'<small>'+(best?best+' bước':(locked?'Khóa':'Chưa qua'))+'</small>';
+    b.onclick=()=>{ if(!locked) startLevel(i); else toast('Hãy hoàn thành màn trước để mở khóa'); };
+    grid.appendChild(b);
+  });
+  hide('ovStart');hide('ovWin');show('ovLevels');
+}
+
+function firstUnsolved(){for(let i=0;i<save.unlocked;i++) if(!save.best[String(i)]) return i; return Math.min(save.unlocked-1,LEVELS.length-1);}
+
+document.getElementById('bStart').onclick=()=>startLevel(firstUnsolved());
+document.getElementById('bStartLevels').onclick=openLevels;
+document.getElementById('bLevels').onclick=openLevels;
+document.getElementById('bCloseLevels').onclick=()=>{hide('ovLevels'); if(!walls) show('ovStart');};
+document.getElementById('bUndo').onclick=undo;
+document.getElementById('bRestart').onclick=()=>{startLevel(lvIndex);toast('Bắt đầu lại màn '+(lvIndex+1));};
+document.getElementById('bNext').onclick=()=>startLevel(lvIndex+1);
+document.getElementById('bReplay').onclick=()=>startLevel(lvIndex);
+document.getElementById('bWinLevels').onclick=openLevels;
+document.getElementById('bSound').onclick=()=>{save.sound=!save.sound;persist();updateHud();};
+document.querySelectorAll('.dpad button').forEach(b=>{
+  const [dx,dy]=b.dataset.d.split(',').map(Number);
+  b.addEventListener('pointerdown',e=>{e.preventDefault();tryMove(dx,dy);});
+});
+
+window.addEventListener('keydown',e=>{
+  const k=e.key;
+  const map={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],w:[0,-1],s:[0,1],a:[-1,0],d:[1,0],W:[0,-1],S:[0,1],A:[-1,0],D:[1,0]};
+  if(map[k]){e.preventDefault();tryMove(map[k][0],map[k][1]);return;}
+  if(k==='z'||k==='Z'||k==='Backspace'){e.preventDefault();undo();return;}
+  if((k==='r'||k==='R')&&walls&&!won){startLevel(lvIndex);return;}
+  if(k==='Enter'){
+    if(!document.getElementById('ovStart').classList.contains('hidden')) startLevel(firstUnsolved());
+    else if(!document.getElementById('ovWin').classList.contains('hidden')) { if(lvIndex<LEVELS.length-1) startLevel(lvIndex+1); }
+  }
+});
+
+// vuốt trên bàn chơi
+let sx=null,sy=null;
+cv.addEventListener('touchstart',e=>{const t=e.touches[0];sx=t.clientX;sy=t.clientY;},{passive:true});
+cv.addEventListener('touchmove',e=>{e.preventDefault();},{passive:false});
+cv.addEventListener('touchend',e=>{
+  if(sx===null) return; const t=e.changedTouches[0]; const dx=t.clientX-sx, dy=t.clientY-sy; sx=null;
+  if(Math.max(Math.abs(dx),Math.abs(dy))<20) return;
+  if(Math.abs(dx)>Math.abs(dy)) tryMove(dx>0?1:-1,0); else tryMove(0,dy>0?1:-1);
+});
+window.addEventListener('resize',()=>{if(walls) resize();});
+
+// hiển thị màn đầu tiên phía sau màn hình bắt đầu
+parseLevel(0); updateHud(); requestAnimationFrame(()=>{resize();});
+loop();
+window.__sokoban = {LEVELS, startLevel, tryMove, state:()=>({lvIndex,moves,pushes,won,player:{x:player.x,y:player.y},boxes:boxes.map(b=>({x:b.x,y:b.y}))})};
+})();
+</script>
+</body>
+</html>
