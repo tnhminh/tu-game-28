@@ -90,7 +90,7 @@
   .chip:hover{background:rgba(255,255,255,.08)} .chip:active{transform:scale(.95)}
   .chip i{font-style:normal;color:#b5e06b} .chip.off i{color:#ff8d7a} .chip svg{width:14px;height:14px}
   .big{display:flex;justify-content:center;margin:0 0 2px}
-  .big img,.big svg{width:150px;height:110px;filter:drop-shadow(0 10px 18px rgba(0,0,0,.5))}
+  .big img,.big svg,.big canvas{width:150px;height:110px;filter:drop-shadow(0 10px 18px rgba(0,0,0,.5))}
   .medal{display:inline-block;font:900 11px/1 var(--mono);letter-spacing:.25em;color:#2a1d00;background:linear-gradient(90deg,#ffe28a,#ffbf3a);padding:5px 12px;border-radius:4px;margin-bottom:6px}
   .final{display:flex;align-items:center;justify-content:center;gap:14px;font-size:44px;font-weight:900;margin:4px 0 10px;font-family:var(--mono)}
   .final .dash{color:#59653f;font-size:28px}
@@ -181,7 +181,22 @@ const $ = id => document.getElementById(id);
 const CELL = 80, WT = 6, TR = 16, BR = 4;
 const TANK_SPEED = 135, TURN_SPEED = 3.3, BULLET_SPEED = 240, BULLET_LIFE = 7, MAX_BULLETS = 5, COOLDOWN = 0.28;
 const WIN_ROUNDS = 3;
-const COLORS = [ {main:'#e8553d', dark:'#8f2b1b', light:'#ff9a85', name:'Đỏ'}, {main:'#3d9be8', dark:'#1d5689', light:'#94cdff', name:'Xanh'} ];
+const COLORS = [ {main:'#e8553d', dark:'#8f2b1b', light:'#ff9a85', name:'Đỏ', body:'tankBody_red', barrel:'tankRed_barrel1', bullet:'bulletRed2'}, {main:'#3d9be8', dark:'#1d5689', light:'#94cdff', name:'Xanh', body:'tankBody_blue', barrel:'tankBlue_barrel1', bullet:'bulletBlue2'} ];
+// ---- sprites (Kenney "Top-down Tanks Redux", CC0) — fallback to procedural drawing if any fails ----
+const SPR = {}, SPR_NAMES = ['tankBody_red','tankBody_blue','tankRed_barrel1','tankBlue_barrel1','bulletRed2','bulletBlue2','tileSand1','tileSand2','tileGrass1','tileGrass2','sandbagBeige','sandbagBrown','crateMetal','explosion1','explosion2','explosion3','explosion4','explosion5'];
+const sprOk = n => { const im = SPR[n]; return !!(im && im.complete && im.naturalWidth > 0); };
+const burnt = {}; // darkened tank sprites for wrecks (built lazily)
+let sprPending = SPR_NAMES.length, sprRebuildTO = null;
+function sprDone(){ sprPending--; clearTimeout(sprRebuildTO); sprRebuildTO = setTimeout(() => { if (typeof floorL !== 'undefined' && floorL) buildLayers(true); }, sprPending > 0 ? 120 : 0); }
+for (const n of SPR_NAMES){ const im = new Image(); im.onload = sprDone; im.onerror = sprDone; im.src = 'sprites/game2/' + n + '.png'; SPR[n] = im; }
+function burntSprite(n){
+  if (burnt[n] !== undefined) return burnt[n];
+  if (!sprOk(n)) return null;
+  try { const im = SPR[n], c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight; const x = c.getContext('2d');
+    x.drawImage(im, 0, 0); x.globalCompositeOperation = 'source-atop'; x.fillStyle = 'rgba(28,24,20,.72)'; x.fillRect(0, 0, c.width, c.height); burnt[n] = c; }
+  catch(e){ burnt[n] = null; }
+  return burnt[n];
+}
 const STORE = 'xetangdaichien_stats_v1';
 const SET_KEY = 'xetangdaichien_settings_v1';
 function ghEmit(type, data){try{if(window.parent&&window.parent!==window)window.parent.postMessage(Object.assign({gh:1,type:type},data||{}),'*')}catch(e){}}
@@ -641,6 +656,13 @@ function buildLayers(keepDecal){
   seed = 1234 + theme * 77 + walls.length;
   // base + cell variation
   c.fillStyle = T.floor; c.fillRect(0, 0, AW, AH);
+  // Kenney ground tiles (sa mạc / đồng cỏ); other themes keep the procedural floor
+  const tk = T.deco === 'sand' ? 'tileSand' : (T.deco === 'grass' ? 'tileGrass' : null);
+  if (tk && sprOk(tk + '1')){
+    const TS = 64, alt = sprOk(tk + '2');
+    for (let y=0; y<AH; y+=TS) for (let x=0; x<AW; x+=TS) c.drawImage(SPR[tk + (alt && srand() < .4 ? '2' : '1')], x, y, TS + .5, TS + .5);
+    c.fillStyle = T.deco === 'grass' ? 'rgba(20,60,10,.12)' : 'rgba(90,60,20,.06)'; c.fillRect(0, 0, AW, AH);
+  }
   for (let r=0;r<ROWS;r++) for (let q=0;q<COLS;q++){ c.fillStyle = (r+q)%2 ? 'rgba(0,0,0,.018)' : 'rgba(255,255,255,.015)'; c.fillRect(q*CELL, r*CELL, CELL, CELL); }
   // big soft blotches
   for (let i=0;i<14;i++){ const x = srand()*AW, y = srand()*AH, rr = 40 + srand()*90; const g = c.createRadialGradient(x, y, 0, x, y, rr); g.addColorStop(0, srand() < .5 ? 'rgba(0,0,0,.07)' : 'rgba(255,255,255,.07)'); g.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = g; c.fillRect(x-rr, y-rr, rr*2, rr*2); }
@@ -669,7 +691,25 @@ function buildLayers(keepDecal){
     for (let i=0;i<4;i++){ const x = (Math.floor(srand()*COLS)+.5)*CELL + 20, y = (Math.floor(srand()*ROWS)+.5)*CELL - 20; c.fillStyle = 'rgba(0,0,0,.3)'; c.beginPath(); c.arc(x+1, y+1, 9, 0, Math.PI*2); c.fill(); c.fillStyle = '#3e4146'; c.beginPath(); c.arc(x, y, 9, 0, Math.PI*2); c.fill(); c.strokeStyle = 'rgba(255,255,255,.12)'; c.beginPath(); for (let l=-6;l<=6;l+=3){ c.moveTo(x - 7, y + l); c.lineTo(x + 7, y + l); } c.stroke(); }
   }
   // spawn pads (vạch xuất phát mờ)
-  // walls: shadow, side, top
+  // walls: Kenney sandbags / metal crates laid along the collision rects (visual 2px thicker each side)
+  const wk = T.deco === 'city' ? 'crateMetal' : (T.deco === 'grass' ? 'sandbagBrown' : 'sandbagBeige');
+  if (sprOk(wk)){
+    const im = SPR[wk], th = WT + 4, crate = wk === 'crateMetal', segL = crate ? th : th * im.naturalWidth / im.naturalHeight;
+    const vr = w => w.w >= w.h ? { x:w.x, y:w.y - 2, w:w.w, h:th } : { x:w.x - 2, y:w.y, w:th, h:w.h };
+    c.fillStyle = 'rgba(0,0,0,.3)'; for (const w of walls){ const v = vr(w); c.fillRect(v.x + 2, v.y + 4, v.w, v.h); }
+    if (HI()){ c.fillStyle = 'rgba(0,0,0,.12)'; for (const w of walls){ const v = vr(w); c.fillRect(v.x + 4, v.y + 7, v.w + 1, v.h + 1); } }
+    for (const w of walls){
+      const horiz = w.w >= w.h, len = horiz ? w.w : w.h, n = Math.max(1, Math.round(len / segL)), step = len / n;
+      for (let s=0; s<n; s++){
+        c.save();
+        if (horiz) c.translate(w.x + (s + .5) * step, w.y + w.h / 2); else { c.translate(w.x + w.w / 2, w.y + (s + .5) * step); c.rotate(Math.PI / 2); }
+        c.drawImage(im, -step / 2 - .6, -th / 2, step + 1.2, th);
+        c.restore();
+      }
+      if (T.deco === 'snow'){ c.fillStyle = 'rgba(255,255,255,.75)'; if (horiz) c.fillRect(w.x, w.y - 2, w.w, 2.4); else c.fillRect(w.x - 2, w.y, 2.4, w.h); }
+    }
+  } else {
+  // walls (procedural fallback): shadow, side, top
   c.fillStyle = 'rgba(0,0,0,.28)';
   for (const w of walls) c.fillRect(w.x + 3, w.y + 5, w.w, w.h);
   if (HI()){ c.fillStyle = 'rgba(0,0,0,.12)'; for (const w of walls) c.fillRect(w.x + 5, w.y + 8, w.w + 1, w.h + 1); }
@@ -685,6 +725,7 @@ function buildLayers(keepDecal){
     for (let s=seg; s<len - 2; s+=seg){ if (horiz) c.fillRect(w.x + s, w.y + .5, 1, w.h - 1); else c.fillRect(w.x + .5, w.y + s, w.w - 1, 1); }
     if (T.deco === 'city'){ c.save(); c.beginPath(); c.rect(w.x, w.y, w.w, w.h); c.clip(); c.fillStyle = 'rgba(255,203,71,.55)'; for (let s=-20; s<len + 20; s+=40){ for (let z=0; z<8; z+=4){ if (horiz){ c.beginPath(); c.moveTo(w.x + s + z, w.y); c.lineTo(w.x + s + z + 2, w.y); c.lineTo(w.x + s + z + 2 + w.h, w.y + w.h); c.lineTo(w.x + s + z + w.h, w.y + w.h); c.fill(); } } } c.restore(); }
     if (T.deco === 'snow'){ c.fillStyle = 'rgba(255,255,255,.85)'; if (horiz) c.fillRect(w.x, w.y - 1, w.w, 2.2); else c.fillRect(w.x - .5, w.y, 2.2, w.h); }
+  }
   }
   // vignette & border
   const g = c.createRadialGradient(AW/2, AH/2, Math.min(AW, AH) * .35, AW/2, AH/2, Math.max(AW, AH) * .7);
@@ -725,6 +766,7 @@ function explosionFx(t){
   if (!RM){ shake = 14; flashA = .55; } else flashA = .12;
   addFx({ k:'ring', x:t.x, y:t.y, r0:8, r1:90, life:.45, max:.45, c:'rgba(255,240,200,', w:6 });
   addFx({ k:'light', x:t.x, y:t.y, life:.6, max:.6 });
+  if (sprOk('explosion1')) addFx({ k:'kexp', x:t.x, y:t.y, life:.6, max:.6, a:Math.random()*Math.PI*2 });
   const nf = HI() ? 26 : 10;
   for (let i=0;i<nf;i++){ const a = Math.random()*Math.PI*2, s = 20 + Math.random()*110; addFx({ k:'fire', x:t.x + Math.cos(a)*4, y:t.y + Math.sin(a)*4, vx:Math.cos(a)*s, vy:Math.sin(a)*s, r:5 + Math.random()*9, life:.35 + Math.random()*.45, max:.8 }); }
   const ns = HI() ? 22 : 7;
@@ -826,18 +868,32 @@ function drawTankBody(c, t, col, dead, recoil){
   // antenna
   c.strokeStyle = dead ? 'rgba(30,30,30,.6)' : 'rgba(20,20,20,.7)'; c.lineWidth = 1; c.beginPath(); c.moveTo(-5, -5); c.lineTo(-13, -9 + Math.sin(t.tread * .4) * 1.5); c.stroke();
 }
+// Kenney tank sprites face DOWN (+y): rotate -90° so local +x (the game's heading) is the front.
+// Body fitted into ~34x36 (procedural tank is 36 long, hitbox radius TR=16); barrel pivots at the hull centre and reaches ~26px (muzzle at TR+10).
+function drawTankSprite(c, col, dead, recoil){
+  const bn = col.body, brn = col.barrel;
+  if (!sprOk(bn) || !sprOk(brn)) return false;
+  const body = dead ? (burntSprite(bn) || SPR[bn]) : SPR[bn], barrel = dead ? (burntSprite(brn) || SPR[brn]) : SPR[brn];
+  const bw = SPR[bn].naturalWidth, bh = SPR[bn].naturalHeight, s = Math.min(34 / bw, (TR * 2 + 4) / bh);
+  const rw = SPR[brn].naturalWidth * s, rh = SPR[brn].naturalHeight * s;
+  c.save(); c.rotate(-Math.PI / 2);
+  c.drawImage(body, -bw * s / 2, -bh * s / 2, bw * s, bh * s);
+  c.drawImage(barrel, -rw / 2, -1 - recoil * 5, rw, rh);
+  c.restore();
+  return true;
+}
 function drawTank(t){
   const c = COLORS[t.i];
   ctx.save(); ctx.translate(t.x, t.y); ctx.rotate(t.a);
   // shadow
   ctx.fillStyle = 'rgba(0,0,0,.32)'; rr(-TR+2, -TR+4, TR*2+4, TR*2, 6); ctx.fill();
-  drawTankBody(ctx, t, c, false, vis[t.i].recoil);
+  if (!drawTankSprite(ctx, c, false, vis[t.i].recoil)) drawTankBody(ctx, t, c, false, vis[t.i].recoil);
   ctx.restore();
 }
 function drawWreck(w){
   ctx.save(); ctx.translate(w.x, w.y); ctx.rotate(w.a + .25);
   ctx.globalAlpha = Math.min(1, w.t * 3);
-  drawTankBody(ctx, { tread:0 }, COLORS[w.i], true, 0);
+  if (!drawTankSprite(ctx, COLORS[w.i], true, 0)) drawTankBody(ctx, { tread:0 }, COLORS[w.i], true, 0);
   ctx.restore(); ctx.globalAlpha = 1;
   if (HI() || w.t < 2){
     const fl = .6 + .4 * Math.sin(performance.now() / 60 + w.x);
@@ -894,12 +950,28 @@ function render(){
       if (HI()){ const gg = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, BR*3.2); gg.addColorStop(0, 'rgba(255,240,200,.6)'); gg.addColorStop(1, 'rgba(255,200,120,0)'); ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(b.x, b.y, BR*3.2, 0, Math.PI*2); ctx.fill(); }
       ctx.globalCompositeOperation = 'source-over';
     }
+    if (sprOk(col.bullet)){ // Kenney bullet points UP (-y): rotate by heading + 90°
+      const im = SPR[col.bullet], bh = BR * 2.75, bw = bh * im.naturalWidth / im.naturalHeight;
+      ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(Math.atan2(uy, ux) + Math.PI / 2);
+      if (blink) ctx.globalAlpha = .4;
+      ctx.drawImage(im, -bw / 2, -bh / 2, bw, bh);
+      ctx.restore();
+      continue;
+    }
     const bg = ctx.createRadialGradient(b.x - 1.2, b.y - 1.2, .3, b.x, b.y, BR);
     if (blink){ bg.addColorStop(0, '#888'); bg.addColorStop(1, '#222'); } else { bg.addColorStop(0, '#fff'); bg.addColorStop(.45, col.light); bg.addColorStop(1, col.dark); }
     ctx.fillStyle = bg; ctx.beginPath(); ctx.arc(b.x, b.y, BR, 0, Math.PI*2); ctx.fill();
   }
   // smoke (normal blend)
   for (const q of fxs) if (q.k === 'smoke' && !(q.delay > 0)){ const a = q.life / q.max; ctx.fillStyle = q.c + (a * .45) + ')'; ctx.beginPath(); ctx.arc(q.x, q.y, q.r, 0, Math.PI*2); ctx.fill(); }
+  // Kenney explosion flipbook (explosion1..5)
+  for (const q of fxs) if (q.k === 'kexp'){
+    const p = 1 - Math.max(0, q.life / q.max), f = Math.min(4, Math.floor(p * 5)), im = SPR['explosion' + (f + 1)];
+    if (!sprOk('explosion' + (f + 1))) continue;
+    const s = 56 + p * 30;
+    ctx.save(); ctx.translate(q.x, q.y); ctx.rotate(q.a); ctx.globalAlpha = p > .8 ? (1 - p) * 5 : 1;
+    ctx.drawImage(im, -s / 2, -s / 2, s, s); ctx.restore();
+  }
   // additive fx
   ctx.globalCompositeOperation = 'lighter';
   for (const q of fxs){
@@ -969,8 +1041,9 @@ function tankPortrait(i){
   for (let k=0;k<12;k++){ const a = k / 12 * Math.PI * 2; x.beginPath(); x.moveTo(75 + Math.cos(a)*30, 58 + Math.sin(a)*30); x.lineTo(75 + Math.cos(a)*52, 58 + Math.sin(a)*52); x.stroke(); }
   x.translate(75, 58); x.rotate(-Math.PI/2 - .3); x.scale(2, 2);
   x.fillStyle = 'rgba(0,0,0,.35)'; rrc(x, -TR+2, -TR+4, TR*2+4, TR*2, 6); x.fill();
-  drawTankBody(x, { tread:0 }, COLORS[i], false, 0);
-  const img = new Image(); img.src = c.toDataURL(); img.alt = ''; return img;
+  if (!drawTankSprite(x, COLORS[i], false, 0)) drawTankBody(x, { tread:0 }, COLORS[i], false, 0);
+  try { const img = new Image(); img.src = c.toDataURL(); img.alt = ''; return img; }
+  catch(e){ return c; } // canvas tainted (e.g. opened via file://) — show the canvas itself
 }
 
 let last = performance.now();

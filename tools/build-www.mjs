@@ -281,7 +281,7 @@ async function main() {
     const dstDir = path.join(OUT, 'games', g); mkdirp(dstDir);
     for (const f of fs.readdirSync(srcDir).sort()) {
       const s = path.join(srcDir, f);
-      if (!fs.statSync(s).isFile()) continue;
+      if (fs.statSync(s).isDirectory()) { copyDir(s, path.join(dstDir, f)); continue; } // vd. sprites/
       if (/^game\d+\.html$/.test(f)) {
         const r = processGame(fs.readFileSync(s, 'utf8'), `${g}/${f}`);
         fs.writeFileSync(path.join(dstDir, f), r.html);
