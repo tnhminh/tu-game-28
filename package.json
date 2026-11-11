@@ -1,0 +1,31 @@
+{
+  "name": "tu-game-28",
+  "version": "1.0.0",
+  "description": "28 game chơi trên trình duyệt, chia theo 7 thể loại. Giao diện tiếng Việt, chơi được bằng bàn phím trên máy tính và cảm ứng trên điện thoại.",
+  "scripts": {
+    "build:www": "node tools/build-www.mjs",
+    "cap:sync": "npx cap sync",
+    "build:android": "bash tools/build-android.sh",
+    "open:android": "npx cap open android",
+    "open:ios": "npx cap open ios"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@capacitor-community/admob": "8.3.0",
+    "@capacitor/android": "8.6.0",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/core": "8.6.0",
+    "@capacitor/haptics": "8.0.2",
+    "@capacitor/ios": "8.6.0",
+    "@capacitor/local-notifications": "8.3.1",
+    "@capacitor/splash-screen": "8.0.2",
+    "@capacitor/status-bar": "8.0.4",
+    "cordova-plugin-purchase": "13.20.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.6.0"
+  },
+  "private": true
+}

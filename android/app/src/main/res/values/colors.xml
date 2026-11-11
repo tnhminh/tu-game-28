@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark theme of Tủ Game 28 -->
+    <color name="colorPrimary">#12131C</color>
+    <color name="colorPrimaryDark">#12131C</color>
+    <color name="colorAccent">#FFC94A</color>
+    <color name="splashBackground">#12131C</color>
+</resources>

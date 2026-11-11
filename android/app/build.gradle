@@ -1,0 +1,105 @@
+apply plugin: 'com.android.application'
+
+// ---------------------------------------------------------------------------
+// Release signing (upload key). Secrets are NEVER stored in the repo.
+// Lookup order:
+//   1. env TG28_KEYSTORE_PROPERTIES=/abs/path/keystore.properties
+//   2. android/keystore.properties (git-ignored) with a line
+//        keystorePropertiesFile=/home/user/release-keys/keystore.properties
+//      (or containing storeFile/storePassword/keyAlias/keyPassword directly)
+//   3. env TG28_STORE_FILE, TG28_STORE_PASSWORD, TG28_KEY_ALIAS, TG28_KEY_PASSWORD (CI)
+// If none is found, release builds are produced UNSIGNED (and a warning is printed).
+// ---------------------------------------------------------------------------
+def signingProps = new Properties()
+def loadProps = { File f -> def p = new Properties(); f.withInputStream { p.load(it) }; p }
+def envPropsPath = System.getenv('TG28_KEYSTORE_PROPERTIES')
+def localPointer = rootProject.file('keystore.properties')
+if (envPropsPath) {
+    signingProps = loadProps(new File(envPropsPath))
+} else if (localPointer.exists()) {
+    signingProps = loadProps(localPointer)
+    if (signingProps.getProperty('keystorePropertiesFile')) {
+        signingProps = loadProps(new File(signingProps.getProperty('keystorePropertiesFile')))
+    }
+}
+['storeFile': 'TG28_STORE_FILE', 'storePassword': 'TG28_STORE_PASSWORD',
+ 'keyAlias': 'TG28_KEY_ALIAS', 'keyPassword': 'TG28_KEY_PASSWORD'].each { k, env ->
+    if (!signingProps.getProperty(k) && System.getenv(env)) signingProps.setProperty(k, System.getenv(env))
+}
+def hasReleaseSigning = ['storeFile', 'storePassword', 'keyAlias', 'keyPassword'].every { signingProps.getProperty(it) }
+
+android {
+    namespace = "vn.tugame28.app"
+    compileSdk = rootProject.ext.compileSdkVersion
+    defaultConfig {
+        // Placeholder app id — change here, in namespace above and in capacitor.config.json
+        // before the FIRST Play upload (see docs/BUILD.md). It is permanent once published.
+        applicationId "vn.tugame28.app"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        // Bump BOTH for every Play upload: versionCode must strictly increase.
+        versionCode 1
+        versionName "1.0.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        aaptOptions {
+             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
+            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    signingConfigs {
+        release {
+            if (hasReleaseSigning) {
+                storeFile file(signingProps.getProperty('storeFile'))
+                storePassword signingProps.getProperty('storePassword')
+                keyAlias signingProps.getProperty('keyAlias')
+                keyPassword signingProps.getProperty('keyPassword')
+            }
+        }
+    }
+    buildTypes {
+        release {
+            if (hasReleaseSigning) {
+                signingConfig signingConfigs.release
+            } else {
+                logger.warn('WARNING: no upload keystore configured - release outputs will be UNSIGNED. See docs/BUILD.md')
+            }
+            minifyEnabled false
+            debuggable false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    bundle {
+        // Keep all languages in the base APK: the app chooses Vietnamese itself.
+        language { enableSplit = false }
+    }
+}
+
+repositories {
+    flatDir{
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    implementation project(':capacitor-android')
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    implementation project(':capacitor-cordova-android-plugins')
+}
+
+apply from: 'capacitor.build.gradle'
+
+try {
+    def servicesJSON = file('google-services.json')
+    if (servicesJSON.text) {
+        apply plugin: 'com.google.gms.google-services'
+    }
+} catch(Exception e) {
+    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}

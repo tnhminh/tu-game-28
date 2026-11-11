@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a3a8f"/><stop offset="1" stop-color="#121a4a"/></linearGradient><linearGradient id="m" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9f3ff"/><stop offset="1" stop-color="#9fb4d8"/></linearGradient></defs>
+<circle cx="64" cy="64" r="64" fill="url(#bg)"/>
+<path d="M64 16 v14" stroke="#9fb4d8" stroke-width="4" stroke-linecap="round"/><circle cx="64" cy="14" r="6" fill="#ff5d8f"/><circle cx="62" cy="12" r="2" fill="#fff" opacity=".7"/>
+<rect x="18" y="56" width="10" height="26" rx="5" fill="#7d91b8"/><rect x="100" y="56" width="10" height="26" rx="5" fill="#7d91b8"/>
+<rect x="24" y="30" width="80" height="76" rx="24" fill="url(#m)"/>
+<rect x="33" y="44" width="62" height="40" rx="16" fill="#151a3d"/>
+<rect x="42" y="54" width="14" height="16" rx="7" fill="#4ad8ff"/><rect x="72" y="54" width="14" height="16" rx="7" fill="#4ad8ff"/>
+<rect x="44" y="56" width="5" height="6" rx="2.5" fill="#fff" opacity=".8"/><rect x="74" y="56" width="5" height="6" rx="2.5" fill="#fff" opacity=".8"/>
+<path d="M54 76 q10 6 20 0" stroke="#4ad8ff" stroke-width="3" fill="none" stroke-linecap="round"/>
+<circle cx="40" cy="95" r="3.5" fill="#ffc94a"/><circle cx="52" cy="95" r="3.5" fill="#3fe39a"/><rect x="66" y="92" width="24" height="6" rx="3" fill="#7d91b8"/>
+</svg>

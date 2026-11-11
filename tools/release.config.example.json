@@ -1,0 +1,24 @@
+{
+  "_huong_dan": "Chép file này thành tools/release.config.json, điền giá trị thật, rồi chạy: node tools/apply-release-config.mjs. Để production=false nếu vẫn muốn dùng quảng cáo thử nghiệm.",
+  "production": true,
+  "version": { "name": "1.0.0", "code": 1 },
+  "contactEmail": "ban@vidu.com",
+  "admob": {
+    "androidAppId": "ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX",
+    "iosAppId": "ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX",
+    "android": {
+      "interstitial": "ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX",
+      "rewarded": "ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX"
+    },
+    "ios": {
+      "interstitial": "ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX",
+      "rewarded": "ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX"
+    }
+  },
+  "products": {
+    "remove_ads": "remove_ads",
+    "vip_lifetime": "vip_lifetime",
+    "coins_small": "coins_small",
+    "coins_large": "coins_large"
+  }
+}

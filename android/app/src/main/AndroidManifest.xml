@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+      Tủ Game 28 — see docs/BUILD.md.
+      appId / applicationId (vn.tugame28.app) is a placeholder: change it in
+      capacitor.config.json AND android/app/build.gradle (applicationId + namespace)
+      before the first upload to Google Play. It can never change after that.
+    -->
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:hardwareAccelerated="true"
+        android:usesCleartextTraffic="false"
+        android:theme="@style/AppTheme">
+
+        <!--
+          Orientation: no android:screenOrientation, so the activity follows the
+          device (portrait + landscape) — individual games need both.
+          Back button: not overridden natively; Capacitor forwards it to the web
+          layer, where the hub listens with App.addListener('backButton', ...).
+        -->
+        <activity
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
+            android:name=".MainActivity"
+            android:label="@string/title_activity_main"
+            android:theme="@style/AppTheme.NoActionBarLaunch"
+            android:launchMode="singleTask"
+            android:hardwareAccelerated="true"
+            android:resizeableActivity="true"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+        </activity>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths"></meta-data>
+        </provider>
+
+        <!--
+          AdMob App ID. ***REPLACE BEFORE RELEASE*** with your real AdMob app id
+          (AdMob console → Apps → App settings, format ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY).
+          The value below is Google's official SAMPLE/TEST app id; with it only test ads
+          are served and no revenue is earned. Without this meta-data the Google Mobile
+          Ads SDK crashes the app at start-up.
+        -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713" />
+
+        <!-- Child-directed app: hub/js/ads.js initialises AdMob with tagForChildDirectedTreatment,
+             tagForUnderAgeOfConsent, maxAdContentRating 'General' and requests ads with npa:true. -->
+    </application>
+
+    <!-- Permissions -->
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Google Play Billing (in-app purchases via cordova-plugin-purchase). The plugin
+         also declares it; repeated here so it survives plugin changes. -->
+    <uses-permission android:name="com.android.vending.BILLING" />
+
+    <!--
+      AD_ID REMOVED (Google Play Families policy): apps whose target audience includes
+      children must not transmit the Android Advertising ID. play-services-ads merges
+      com.google.android.gms.permission.AD_ID into the manifest automatically; we strip it.
+      Consequence: the SDK sees a zeroed advertising id, ads stay non-personalised
+      (which this app requires anyway). In Play Console → App content → Advertising ID,
+      answer "No, my app does not use advertising ID".
+    -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />
+
+    <!--
+      Privacy Sandbox (AdServices) permissions REMOVED for the same reason: play-services-ads
+      adds them for the Topics / Attribution / Sandbox-ad-id APIs, which are interest-based
+      advertising signals that must not be used in a child-directed app.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_ADSERVICES_AD_ID" tools:node="remove" />
+    <uses-permission android:name="android.permission.ACCESS_ADSERVICES_ATTRIBUTION" tools:node="remove" />
+    <uses-permission android:name="android.permission.ACCESS_ADSERVICES_TOPICS" tools:node="remove" />
+
+    <!--
+      SCHEDULE_EXACT_ALARM REMOVED: @capacitor/local-notifications declares it, but the
+      app's reminders (daily check-in, 30-min eye-break) do not need to-the-minute delivery.
+      Without it the plugin automatically schedules inexact alarms (setAndAllowWhileIdle).
+      This keeps the app clear of Play's exact-alarm policy and the Android 14+ permission
+      prompt. Do not pass exact-mandatory schedules from JS. Delete this line to restore it.
+    -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" tools:node="remove" />
+</manifest>
